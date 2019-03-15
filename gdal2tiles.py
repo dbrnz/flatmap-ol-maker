@@ -129,7 +129,7 @@ class GlobalMercator(object):
 
      WGS84 coordinates   Spherical Mercator  Pixels in pyramid  Tiles in pyramid
          lat/lon            XY in meters     XY pixels Z zoom      XYZ from TMS
-        EPSG:4326           EPSG:387
+        EPSG:4326           EPSG:3857
          .----.              ---------               --                TMS
         /      \     <->     |       |     <->     /----/    <->      Google
         \      /             |       |           /--------/          QuadTree
@@ -2866,7 +2866,7 @@ def multi_threaded_tiling(input_file, output_folder, options):
 
     if options.verbose:
         print("Tiles details calc complete.")
-        
+
     if not options.verbose and not options.quiet:
         progress_bar = ProgressBar(len(tile_details))
         progress_bar.start()
