@@ -99,6 +99,9 @@ class TileMaker(object):
 
         if offset is None:
             offset = [0, 0]
+        else:
+            # PIL origin is top left, map's is bottom right
+            offset[1] = (self._map.bounds[1] - offset[1]) - scaled_image.height
 
         overview_height = self._map.bounds[1]
         offset[1] += (self._tiled_image_size[1] - overview_height)
@@ -175,8 +178,8 @@ def main(args):
                         COLOUR_WHITE if args.transparent else None)
     tm.make_tiles(image,
         scale=[float(s) for s in args.scale] if args.scale else None,
-        offset=[int(z) for o in args.offset] if args.offset else None,
-        zoom_range=[int(z) for z in args.zoom] if args.zoom else None)
+        offset=[int(o) for o in args.offset] if args.offset else None,
+        zoom_range=range(int(args.zoom[0]), int(args.zoom[1])+1) if args.zoom else None)
 
 #===============================================================================
 
