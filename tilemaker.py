@@ -46,13 +46,16 @@ import os
 
 #===============================================================================
 
+import numpy as np
 from PIL import Image
 
 Image.MAX_IMAGE_PIXELS = None
 
 #===============================================================================
 
-TILE_SIZE = (256, 256)
+COLOUR_WHITE = (255, 255, 255)
+
+TILE_SIZE    = (256, 256)
 
 #===============================================================================
 
@@ -63,22 +66,29 @@ def create_directories(file_name):
 
 #===============================================================================
 
+# Based on https://stackoverflow.com/a/54148416/2159023
+
+def make_transparent(img, colour):
+    x = np.asarray(img.convert('RGBA')).copy()
+    if colour == COLOUR_WHITE:
+        x[:, :, 3] = (255 * (x[:, :, :3] != 255).any(axis=2)).astype(np.uint8)
+    else:
+        x[:, :, 3] = (255*(x[:,:,0:3] != tuple(colour)[0:3]).any(axis=2)).astype(np.uint8)
+    return Image.fromarray(x)
+
+#===============================================================================
+
 class TileMaker(object):
-    def __init__(self, map, tile_path, zoom_range=None):
+    def __init__(self, map):
         self._map = map
         self._tiled_size = (int(math.ceil(map.bounds[0]/TILE_SIZE[0])),
                             int(math.ceil(map.bounds[1]/TILE_SIZE[1])))
         self._tiled_image_size = (TILE_SIZE[0]*self._tiled_size[0],
                                   TILE_SIZE[1]*self._tiled_size[1])
-
-
         max_tile_dim = max(self._tiled_size[0], self._tiled_size[1])
         self._full_zoom = int(math.ceil(math.log(max_tile_dim, 2)))
-        self._tile_path = tile_path
-        self._zoom_range = zoom_range
 
-
-    def make_tiles(self, image, scale=None, offset=None):
+    def make_tiles(self, image, scale=None, offset=None, zoom_range=None):
         if scale is None:
             scaled_image = image.image
         else:
@@ -87,37 +97,36 @@ class TileMaker(object):
 
         tiled_image = Image.new('RGBA', self._tiled_image_size, (0, 0, 0, 0))
 
-        overview_height = self._map.bounds[1]
-        y_offset = self._tiled_image_size[1] - overview_height
         if offset is None:
-            offset = [0, y_offset]   ##  Y offset to drop image down
-        tiled_image.paste(scaled_image, offset, scaled_image)
+            offset = [0, 0]
 
-        tiled_size = self._tiled_size
+        overview_height = self._map.bounds[1]
+        offset[1] += (self._tiled_image_size[1] - overview_height)
+        tiled_image.paste(scaled_image, offset, scaled_image)
 
         # Divide tiled_image into TILE_SIZE tiles, only outputting non-transparent
         # tiles.
 
+        if zoom_range is None:
+            zoom_range = range(self._full_zoom+1)
+
+        tiled_size = self._tiled_size
         for z in range(self._full_zoom, -1, -1):
-            print('Tiling', z, tiled_size, tiled_image.size)
+            if z in zoom_range:
+                print('Tiling zoom level {} ({} x {} tiles)'.format(z, tiled_size[0], tiled_size[1]))
             overview_image = Image.new('RGBA', (tiled_image.width//2, tiled_image.height//2), (0, 0, 0, 0))
             overview_size = (int(math.ceil(tiled_size[0]/2)), int(math.ceil(tiled_size[1]/2)))
             overview_height //= 2
-            overview_offset = TILE_SIZE[1]*overview_size[1] - overview_height
             left = 0
             for x in range(tiled_size[0]):
                 lower = tiled_image.height
                 for y in range(tiled_size[1]):   ## y = 0 is lowest tile row
                     tile = tiled_image.crop((left, lower-TILE_SIZE[1], left+TILE_SIZE[0], lower))
-                    tile_name = os.path.join(self._tile_path, image.layer_name, str(z), str(x), '{}.png'.format(y))
-#                    if x in [11, 12] and y in [60, 61, 62]:
-#                        print(tile_name, left, lower, tile.getbbox())
-#                        if x == 12:
-#                            tile.save('head-{}.png'.format(y))
-                    if tile.getbbox():     ## and z in self._zoom_range
-                        create_directories(tile_name)
-                        tile.save(tile_name)
-                        # Only need to paste if not empty...
+                    tile_name = os.path.join(self._map.id, 'tiles', image.layer_name, str(z), str(x), '{}.png'.format(y))
+                    if tile.getbbox():
+                        if z in zoom_range:
+                            create_directories(tile_name)
+                            tile.save(tile_name)
                         half_tile = tile.resize((TILE_SIZE[0]//2, TILE_SIZE[1]//2), Image.LANCZOS)
                         overview_image.paste(half_tile, (left//2, (lower-TILE_SIZE[1])//2), half_tile)
                     lower -= TILE_SIZE[1]
@@ -125,24 +134,29 @@ class TileMaker(object):
             tiled_image = overview_image
             tiled_size = overview_size
 
-
 #===============================================================================
 
 class Map(object):
-    def __init__(self, bounds):
+    def __init__(self, id, bounds):
+        self._id = id
         self._bounds = bounds
 
     @property
     def bounds(self):
         return self._bounds
 
+    @property
+    def id(self):
+        return self._id
 
 #===============================================================================
 
 class ImageSource(object):
-    def __init__(self, file_name, layer_name):
-        self._image = Image.open(file_name)
+    def __init__(self, layer_name, file_name, transparent_colour=None):
         self._layer_name = layer_name
+        self._image = Image.open(file_name)
+        if transparent_colour is not None:
+            self._image = make_transparent(self._image, transparent_colour)
 
     @property
     def image(self):
@@ -152,30 +166,37 @@ class ImageSource(object):
     def layer_name(self):
         return self._layer_name
 
-
 #===============================================================================
 
-def main(options):
-    map = Map((10000, 18000))
-    tm = TileMaker(map, 'tiles')
-
-    image = ImageSource('./head-alpha.png', 'head')
-
-    # Check for a `world` file to get image scale and offset
-    # But these are properties specifying how an image is embedded into a map,
-    # so are to do with the map, not the image (the same image might be
-    # embedded differently in different maps).
-
-    tm.make_tiles(image)
+def main(args):
+    map = Map(args.map[0], [int(a) for a in args.map[1:]])
+    tm = TileMaker(map)
+    image = ImageSource(args.layer[0], args.layer[1],
+                        COLOUR_WHITE if args.transparent else None)
+    tm.make_tiles(image,
+        scale=[float(s) for s in args.scale] if args.scale else None,
+        offset=[int(z) for o in args.offset] if args.offset else None,
+        zoom_range=[int(z) for z in args.zoom] if args.zoom else None)
 
 #===============================================================================
 
 if __name__ == '__main__':
-    # Get options
+    import argparse
 
-    # Option to make colour value transparent
+    parser = argparse.ArgumentParser(description='Generate tiles for a Flatmap.')
+    parser.add_argument('--map', required=True, nargs=3, metavar=('ID', 'WIDTH', 'HEIGHT'),
+                        help='REQUIRED: the map to generate tiles for. Size is in map pixel units.')
+    parser.add_argument('--layer', required=True, nargs=2, metavar=('ID', 'SOURCE_PNG'),
+                        help='REQUIRED: image to tile for a single map layer.')
+    parser.add_argument('--offset', nargs=2, metavar=('BOTTOM', 'RIGHT'),
+                        help='Bottom right corner of image in map pixel units.')
+    parser.add_argument('--scale', nargs=2, metavar=('X-SIZE', 'Y-SIZE'),
+                        help='Size of an image pixel in terms of a map pixel unit.')
+    parser.add_argument('--transparent', action='store_true', help='Make white in image transparent.')
+    parser.add_argument('--zoom', nargs=2, metavar=('MIN-LEVEL', 'MAX-LEVEL'),
+                        help='Range of zoom levels to generate tiles for.')
 
-    options = {}
-    main(options)
+    args = parser.parse_args()
+    main(args)
 
 #===============================================================================
