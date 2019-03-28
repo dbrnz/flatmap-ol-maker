@@ -1,0 +1,25 @@
+{
+    "id": "body",
+    "size": [10000, 18000],
+    "layers": [
+        {
+            "id": "head",
+            "source": "images/head.svg",
+            "extent": [200, 0, 400, 720]
+        }, {
+            "id": "brainstem",
+            "title": "Brainstem",
+            "source": "images/brainstem.svg",
+            "extent": [390, 80, 345, 385],
+            "scale": 7,
+            "origin": [3600, 13500],
+            "zoom": [5, 7]
+        }, {
+            "id": "cardiovascular",
+            "title": "Cardiovascular",
+            "source": "images/cardiovascular.svg",
+            "extent": [200, 0, 400, 720]
+        }
+    ]
+}
+
