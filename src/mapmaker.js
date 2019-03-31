@@ -32,7 +32,7 @@ const TILE_PIXELS = [256, 256];
 
 //==============================================================================
 
-class TileMaker
+class MapMaker
 {
 	constructor(id, size, outputDirectory)
 	{
@@ -58,7 +58,7 @@ class TileMaker
 async function main()
 {
 	if (process.argv.length < 4) {
-	  	console.error('Usage: tilemaker SPECIFICATION OUTPUT_DIRECTORY');
+	  	console.error('Usage: mapmaker SPECIFICATION OUTPUT_DIRECTORY');
   		process.exit(-1);
 	}
 
@@ -83,11 +83,11 @@ async function main()
 	  	}
 	}
 
-	const tileMaker = new TileMaker(map.id, map.size, outputDirectory);
+	const mapMaker = new MapMaker(map.id, map.size, outputDirectory);
 
 	try {
 		for (const layer of map.layers) {
-			tileMaker.tile(layer);
+			mapMaker.tile(layer);
 		}
 	} catch (e) {
 		console.error(e.message);
