@@ -76,10 +76,21 @@ async function main()
 
 	const map = JSON.parse(fs.readFileSync(specification));
 
+	for (const layer of map.layers) {
+	 	if (!fs.existsSync(path.resolve(layer.source))) {
+		  	console.error(`SVG file '${layer.source} does not exist`);
+	  		process.exit(-1);
+	  	}
+	}
+
 	const tileMaker = new TileMaker(map.id, map.size, outputDirectory);
 
-	for (const layer of map.layers) {
-		tileMaker.tile(layer);
+	try {
+		for (const layer of map.layers) {
+			tileMaker.tile(layer);
+		}
+	} catch (e) {
+		console.error(e.message);
 	}
 }
 
