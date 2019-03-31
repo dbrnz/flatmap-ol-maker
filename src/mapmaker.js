@@ -34,12 +34,13 @@ const TILE_PIXELS = [256, 256];
 
 class MapMaker
 {
-	constructor(id, size, outputDirectory)
+	constructor(map, outputDirectory)
 	{
-		this._id = id;
-		this._size = size;
-		this._tileDims = [Math.ceil(size[0]/TILE_PIXELS[0]),
-                          Math.ceil(size[1]/TILE_PIXELS[1])];
+        this._map = map;
+		this._id = map.id;
+		this._size = map.size;
+		this._tileDims = [Math.ceil(this._size[0]/TILE_PIXELS[0]),
+                          Math.ceil(this._size[1]/TILE_PIXELS[1])];
         this._tiledSize = [TILE_PIXELS[0]*this._tileDims[0],
                            TILE_PIXELS[1]*this._tileDims[1]];
         const maxTileDim = Math.max(this._tileDims[0], this._tileDims[1]);
@@ -83,7 +84,7 @@ async function main()
 	  	}
 	}
 
-	const mapMaker = new MapMaker(map.id, map.size, outputDirectory);
+	const mapMaker = new MapMaker(map, outputDirectory);
 
 	try {
 		for (const layer of map.layers) {
