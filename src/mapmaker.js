@@ -56,7 +56,7 @@ class MapMaker
 
 //==============================================================================
 
-async function main()
+function main()
 {
 	if (process.argv.length < 4) {
 	  	console.error('Usage: mapmaker SPECIFICATION OUTPUT_DIRECTORY');
