@@ -28,12 +28,22 @@ const path = require('path');
 
 //==============================================================================
 
+const TILE_PIXELS = [256, 256];
+
+//==============================================================================
+
 class TileMaker
 {
 	constructor(id, size, outputDirectory)
 	{
 		this._id = id;
 		this._size = size;
+		this._tileDims = [Math.ceil(size[0]/TILE_PIXELS[0]),
+                          Math.ceil(size[1]/TILE_PIXELS[1])];
+        this._tiledSize = [TILE_PIXELS[0]*this._tileDims[0],
+                           TILE_PIXELS[1]*this._tileDims[1]];
+        const maxTileDim = Math.max(this._tileDims[0], this._tileDims[1]);
+        this._fullZoom = Math.ceil(Math.log2(maxTileDim));
 		this._outputDirectory = outputDirectory;
 	}
 
