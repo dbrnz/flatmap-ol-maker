@@ -252,6 +252,7 @@ function main()
 	  	console.error(`File '${specification} does not exist`);
   		process.exit(-1);
   	}
+    const specDir = path.dirname(path.resolve(specification));
 
 	const outputDirectory = process.argv[3];
  	if (!fs.existsSync(path.resolve(outputDirectory))) {
@@ -262,6 +263,10 @@ function main()
 	const map = JSON.parse(fs.readFileSync(specification));
 
 	for (const layer of map.layers) {
+        // Relative paths wrt the specification file's directory
+        if (!path.isAbsolute(layer.source)) {
+            layer.source = path.resolve(specDir, layer.source);
+        }
 	 	if (!fs.existsSync(path.resolve(layer.source))) {
 		  	console.error(`SVG file '${layer.source} does not exist`);
 	  		process.exit(-1);
