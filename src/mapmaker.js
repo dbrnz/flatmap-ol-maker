@@ -35,6 +35,57 @@ const TILE_PIXELS = [256, 256];
 
 //==============================================================================
 
+async function svgToPng(layer, svg, zoomLevel)
+{
+    const scale = 2**zoomLevel;  // some function of zoomLevel...  (map resolution)/2**zoom
+
+    const canvas = document.createElement('canvas');
+    canvas.id = `${layer.id}-${zoomLevel}-canvas`;
+
+    const ctx = canvas.getContext('2d');
+
+    const img = new Image();
+    document.body.appendChild(img);
+
+    return new Promise((resolve, reject) =>
+    {
+        const onLoad = () =>
+        {
+            let imageWidth = scale*img.naturalWidth;
+            let imageHeight = scale*img.naturalHeight;
+            canvas.width = imageWidth;
+            canvas.height = imageHeight;
+
+            // Set background color
+            ctx.fillStyle = '#00000000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            //const clip = { x: 0, y:0, width: 640, height: 360 };
+            //ctx.drawImage(img, clip.x, clip.y, clip.width, clip.height, 0, 0, imageWidth, imageHeight);
+            ctx.drawImage(img, 0, 0, imageWidth, imageHeight);
+
+            const dataURI = canvas.toDataURL('image/png');
+            document.body.removeChild(img);
+
+            console.log('Len:', dataURI.length);
+
+            resolve(dataURI);
+        }
+
+        const onError = (e) =>
+        {
+          document.body.removeChild(img);
+          reject(`ERROR: ${e}`);
+        }
+
+        img.addEventListener("load", onLoad);
+        img.addEventListener("error", onError);
+        img.src = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
+    });
+}
+
+//==============================================================================
+
 class MapMaker
 {
 	constructor(map, outputDirectory)
@@ -51,104 +102,140 @@ class MapMaker
 		this._outputDirectory = outputDirectory;
 	}
 
-    async readSvg(filePath)
+    async readSvg_(svgPath)
     {
         return new Promise((resolve, reject) => {
-            fs.readFile(filePath, 'utf-8', (err, data) => {
+            fs.readFile(svgPath, 'utf-8', (err, data) => {
                 if (err) reject(err)
                 else resolve(data);
             })
         });
     }
 
-    async writeTiles(tileData, filePath)
+    async writeTiles_(tileData, tilePath)
     {
-        const image = await Jimp.create(Buffer.from(tileData.substr('data:image/png;base64,'.length), 'base64'));
-        image.write(filePath);
+        //const image = await Jimp.create(Buffer.from(tileData.substr('data:image/png;base64,'.length), 'base64'));
+        console.log('writing', tilePath);
+    //    image.write(tilePath);
     }
 
-    async createTiles(options)
+    async tileZoomLevel_(layer, svg, zoomLevel, page)
     {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
+        const pngDataURI = await page.evaluate(svgToPng, layer, svg, zoomLevel);
 
-        async function tileZoomLevel(svg, options, scale)
-        {
-          return new Promise((resolve, reject) =>
-          {
-            const img = new Image();
-
-            const onLoad = () =>
-            {
-                let imageWidth = scale*img.naturalWidth;
-                let imageHeight = scale*img.naturalHeight;
-                canvas.width = imageWidth;
-                canvas.height = imageHeight;
-
-                // Set background color
-                ctx.fillStyle = '#00000000';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                //const clip = { x: 0, y:0, width: 640, height: 360 };
-                //ctx.drawImage(img, clip.x, clip.y, clip.width, clip.height, 0, 0, imageWidth, imageHeight);
-                ctx.drawImage(img, 0, 0, imageWidth, imageHeight);
-
-                const dataURI = canvas.toDataURL('image/png');
-                document.body.removeChild(img);
-
-                this.writeTiles(dataURI, options).then(() => resolve());
-            }
-
-            const onError = (e) =>
-            {
-              document.body.removeChild(img);
-              reject(`ERROR: ${e}`);
-            }
-
-            img.addEventListener("load", onLoad);
-            img.addEventListener("error", onError);
-
-            document.body.appendChild(img);
-
-            img.src = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
-
-          });
-        }
-
-        async function tileLayer(options)
-        {
-            const svg = await this.readSvg(options.svg);
-
-            // For all zoom levels
-
-            const res1 = tileZoomLevel(svg, `s1-${options.png}`, 1);
-            const res2 = tileZoomLevel(svg, `s2-${options.png}`, 2);
-
-            return Promise.all([res1, res2]);
-        }
-
-        // For all layers
-//        for (const layer of this._map.layers) {
-//            tileMaker.tile(layer);
-//        }
-
-        const layer1 = tileLayer(options);
-        return Promise.all([layer1]);
+        // Now create tiles and write them out...
+        // For all x, y tiles... (a Promise for each)
+        // this.writeTiles_(pngDataURI, path_resolve(this._outputDirectory, tileName))
+        //         .then(() => resolve());
     }
 
-    async makeTiles(options)
+    async tileLayer_(layer, browser)
+    {
+        console.log('Tiling', layer.id);
+
+        const svg = await this.readSvg_(layer.source);
+
+        const page = await browser.newPage();
+        page.on('console', msg => console.log(`Layer ${layer.id}:`, msg.text()));
+
+        // Tile all zoom levels in the layer
+
+        const zoomPromises = [];
+
+        for (const zoomLevel of [0, 1]) {
+            zoomPromises.push(this.tileZoomLevel_(layer, svg, zoomLevel, page));
+        }
+
+        // Wait for zoom level tiling to complete
+
+        await Promise.all(zoomPromises);
+    }
+
+    async makeTiles()
     {
         const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-dev-shm-usage']});
-        const page = await browser.newPage();
 
-        await page.exposeFunction('readSvg', this.readSvg);
-        await page.exposeFunction('writeTiles', this.writeTiles);
+        // Tile all layers
 
-        await page.evaluate(this.createTiles, options);
+        const layerPromises = [];
+
+        for (const layer of this._map.layers) {
+            layerPromises.push(this.tileLayer_(layer, browser));
+        }
+
+        // Wait for layer tiling complete
+
+        await Promise.all(layerPromises);
+
+        // Then close the browser
 
         await browser.close();
     }
 
+
+
+/*
+		layer.source
+
+        if scale is None {
+            scaled_image = image.image
+        }
+        else {
+            scaled_size = [scale[0]*image.width, scale[1]*image.height]
+            scaled_image = image.image.resize(scaled_size, Image.LANCZOS)
+        }
+
+        tiled_image = Image.new('RGBA', this._tiledSize, (0, 0, 0, 0))
+
+        if offset is None {
+            offset = [0, 0]
+        }
+        else {
+            // PIL origin is top left, map's is bottom right
+            offset[1] = (this._map.bounds[1] - offset[1]) - scaled_image.height
+        }
+
+        overview_height = this._map.bounds[1]
+        offset[1] += (this._tiledSize[1] - overview_height)
+        tiled_image.paste(scaled_image, offset, scaled_image)
+
+        // Divide tiled_image into TILE_PIXELS tiles, only outputting non-transparent
+        // tiles.
+
+        if zoom_range is None {
+            zoom_range = range(this._fullZoom+1)
+        }
+
+        tiled_size = this._tileDims
+        for z in range(this._fullZoom, -1, -1) {
+            if z in zoom_range {
+                console.log(`Tiling zoom level ${z} (${tiled_size[0]} x ${tiled_size[0]} tiles)`);
+            }
+            overview_image = Image.new('RGBA', (tiled_image.width//2, tiled_image.height//2), (0, 0, 0, 0))
+            overview_size = (int(math.ceil(tiled_size[0]/2)), int(math.ceil(tiled_size[1]/2)))
+            overview_height //= 2
+            let left = 0;
+            for x in range(tiled_size[0]) {
+                lower = tiled_image.height
+                for y in range(tiled_size[1]) {   // y = 0 is lowest tile row
+                    tile = tiled_image.crop((left, lower-TILE_PIXELS[1], left+TILE_PIXELS[0], lower))
+                    tile_name = os.path.join(this._map.id, 'tiles', image.layer_name, str(z), str(x), '{}.png'.format(y))
+                    if tile.getbbox() {
+                        if z in zoom_range {
+                            create_directories(tile_name)
+                            tile.save(tile_name)
+                        }
+                        half_tile = tile.resize((TILE_PIXELS[0]/2, TILE_PIXELS[1]/2), Image.LANCZOS)
+                        overview_image.paste(half_tile, (left//2, (lower-TILE_PIXELS[1])/2), half_tile)
+                    }
+                    lower -= TILE_PIXELS[1];
+                }
+                left += TILE_PIXELS[0];
+            }
+            tiled_image = overview_image
+            tiled_size = overview_size
+        }
+*/
 }
 
 //==============================================================================
@@ -184,8 +271,7 @@ function main()
 	const mapMaker = new MapMaker(map, outputDirectory);
 
 	try {
-        const options = {svg: 'f.svg', png: 'f.png'};
-        mapMaker.makeTiles(options);
+        mapMaker.makeTiles();
 	} catch (e) {
 		console.error(e.message);
 	}
