@@ -9,6 +9,7 @@
   "author": "David Brooks",
   "license": "Apache-2.0",
   "dependencies": {
+    "image-size": "^0.7.2",
     "jimp": "^0.6.1",
     "puppeteer": "^1.13.0"
   },
