@@ -243,8 +243,7 @@ function main()
 
 	const outputDirectory = process.argv[3];
  	if (!fs.existsSync(path.resolve(outputDirectory))) {
-	  	console.error(`Directory '${outputDirectory} does not exist`);
-  		process.exit(-1);
+        fs.mkdirSync(outputDirectory, {recursive: true, mode: 0o755});
   	}
 
 	const map = JSON.parse(fs.readFileSync(specification));
