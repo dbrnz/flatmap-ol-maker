@@ -49,7 +49,7 @@ async function svgToPng(svgBase64, svgExtent, imageSize)
     const ctx = canvas.getContext('2d');
 
     // Set transparent background
-    ctx.fillStyle = '#00FF00FF';
+    ctx.fillStyle = '#00000000';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     const img = new Image();
