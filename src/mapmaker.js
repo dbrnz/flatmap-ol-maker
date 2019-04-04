@@ -245,6 +245,24 @@ class MapMaker
         await browser.close();
     }
 
+    copyFeatures()
+    //============
+    {
+        const featuresSourceDir = path.resolve(this._map.inputDirectory, 'features');
+        const featuresOutputDir = path.join(this._outputDirectory, 'features');
+
+        if (!fs.existsSync(featuresOutputDir)) {
+            fs.mkdirSync(featuresOutputDir, {mode: 0o755});
+        }
+
+        for (const layer of this._map.layers) {
+            const featureSourceFile = path.join(featuresSourceDir, `${layer.id}.json`);
+            if (fs.existsSync(featureSourceFile)) {
+                fs.copyFileSync(featureSourceFile, path.join(featuresOutputDir, `${layer.id}.json`))
+            }
+        }
+    }
+
     writeIndex()
     //==========
     {
@@ -315,6 +333,7 @@ function main()
 
 	try {
         mapMaker.makeTiles();
+        mapMaker.copyFeatures();
         mapMaker.writeIndex();
 	} catch (e) {
 		console.error(e.message);
