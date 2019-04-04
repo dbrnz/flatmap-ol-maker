@@ -30,25 +30,27 @@ const cropImage = require('../src/cropimage');
 
 //==============================================================================
 
-const TEST_IMAGE = 'test-image';        // 345 x 385
 const TEST_IMAGE_DIR = 'tests/data';
+
+const TEST_IMAGE_1 = 'test-image';        // 345 x 385
+const TEST_IMAGE_2 = 'circle-125x125';    // 125 x 125
 
 //==============================================================================
 
 expect.extend({
-    async toBeCroppedImage(cropId, image, x, y, w, h) {
+    async toBeCroppedImage(cropId, image, imageName, x, y, w, h) {
         const croppedImage = await cropImage.cropImage(image, x, y, w, h);
-        const croppedImageFile = `${TEST_IMAGE_DIR}/${TEST_IMAGE}-cropped-${cropId}.png`;
+        const croppedImageFile = `${TEST_IMAGE_DIR}/${imageName}-cropped-${cropId}.png`;
         const expectedImage = await Jimp.read(croppedImageFile);
         const difference = Jimp.diff(croppedImage, expectedImage, 0);
         if (difference.percent === 0) {
             return {
-                message: () => `expected ${croppedImageFile} not to be (${x}, ${y}, ${w}, ${h}) crop of ${TEST_IMAGE}`,
+                message: () => `expected ${croppedImageFile} not to be (${x}, ${y}, ${w}, ${h}) crop of ${imageName}`,
                 pass: true
             };
         } else {
             return {
-                message: () => `expected ${croppedImageFile} to be (${x}, ${y}, ${w}, ${h}) crop of ${TEST_IMAGE}`,
+                message: () => `expected ${croppedImageFile} to be (${x}, ${y}, ${w}, ${h}) crop of ${imageName}`,
                 pass: false
             };
         }
@@ -58,20 +60,27 @@ expect.extend({
 
 //==============================================================================
 
-test('image cropping', async () => {
-    const image = await new Jimp.read(`${TEST_IMAGE_DIR}/${TEST_IMAGE}.png`);
-    await expect('a').toBeCroppedImage(image, 0, 0, 345, 385);
-    await expect('b').toBeCroppedImage(image, 0, 0, 345, 190);
-    await expect('c').toBeCroppedImage(image, 0, 190, 345, 195);
-    await expect('d').toBeCroppedImage(image, 0, 0, 170, 385);
-    await expect('e').toBeCroppedImage(image, 170, 0, 175, 385);
-    await expect('f').toBeCroppedImage(image, -100, 100, 70, 70);
-    await expect('g').toBeCroppedImage(image, -100, 100, 70, 370);
-    await expect('h').toBeCroppedImage(image, -10, -10, 110, 110);
-    await expect('i').toBeCroppedImage(image, 300, -100, 100, 270);
-    await expect('j').toBeCroppedImage(image, 150, 150, 70, 70);
-    await expect('k').toBeCroppedImage(image, 60, 350, 70, 70);
-    await expect('l').toBeCroppedImage(image, 60, 400, 70, 70);
+test('image cropping test 1', async () => {
+    const image = await new Jimp.read(`${TEST_IMAGE_DIR}/${TEST_IMAGE_1}.png`);
+    await expect('a').toBeCroppedImage(image, TEST_IMAGE_1, 0, 0, 345, 385);
+    await expect('b').toBeCroppedImage(image, TEST_IMAGE_1, 0, 0, 345, 190);
+    await expect('c').toBeCroppedImage(image, TEST_IMAGE_1, 0, 190, 345, 195);
+    await expect('d').toBeCroppedImage(image, TEST_IMAGE_1, 0, 0, 170, 385);
+    await expect('e').toBeCroppedImage(image, TEST_IMAGE_1, 170, 0, 175, 385);
+    await expect('f').toBeCroppedImage(image, TEST_IMAGE_1, -100, 100, 70, 70);
+    await expect('g').toBeCroppedImage(image, TEST_IMAGE_1, -100, 100, 70, 370);
+    await expect('h').toBeCroppedImage(image, TEST_IMAGE_1, -10, -10, 110, 110);
+    await expect('i').toBeCroppedImage(image, TEST_IMAGE_1, 300, -100, 100, 270);
+    await expect('j').toBeCroppedImage(image, TEST_IMAGE_1, 150, 150, 70, 70);
+    await expect('k').toBeCroppedImage(image, TEST_IMAGE_1, 60, 350, 70, 70);
+    await expect('l').toBeCroppedImage(image, TEST_IMAGE_1, 60, 400, 70, 70);
+});
+
+//==============================================================================
+
+test('image cropping test 2', async () => {
+    const image = await new Jimp.read(`${TEST_IMAGE_DIR}/${TEST_IMAGE_2}.png`);
+    await expect('125-6').toBeCroppedImage(image, TEST_IMAGE_2, -125, -6, 256, 256);
 });
 
 //==============================================================================
