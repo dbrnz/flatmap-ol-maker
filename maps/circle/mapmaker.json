@@ -1,0 +1,14 @@
+{
+    "id": "circle",
+    "size": [1000, 1000],
+    "layers": [
+        {
+            "id": "circle",
+            "title": "Circle",
+            "sourceType": "svg",
+            "resolution": 4,
+            "origin": [125, 125]
+        }
+    ]
+}
+
