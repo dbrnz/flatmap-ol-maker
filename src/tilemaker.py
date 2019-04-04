@@ -99,9 +99,9 @@ class TileMaker(object):
 
         if offset is None:
             offset = [0, 0]
-        else:
-            # PIL origin is top left, map's is bottom right
-            offset[1] = (self._map.bounds[1] - offset[1]) - scaled_image.height
+
+        # PIL origin is top left, map's is bottom right
+        offset[1] = (self._map.bounds[1] - offset[1]) - scaled_image.height
 
         overview_height = self._map.bounds[1]
         offset[1] += (self._tiled_image_size[1] - overview_height)
