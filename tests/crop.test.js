@@ -31,6 +31,7 @@ const cropImage = require('../src/cropimage');
 //==============================================================================
 
 const TEST_IMAGE_DIR = 'tests/data';
+const TEST_OUTPUT_DIR = 'tests/fails';
 
 const TEST_IMAGE_1 = 'test-image';        // 345 x 385
 const TEST_IMAGE_2 = 'circle-125x125';    // 125 x 125
@@ -49,6 +50,7 @@ expect.extend({
                 pass: true
             };
         } else {
+            croppedImage.write(`${TEST_OUTPUT_DIR}/${imageName}-cropped-${cropId}.png`);
             return {
                 message: () => `expected ${croppedImageFile} to be (${x}, ${y}, ${w}, ${h}) crop of ${imageName}`,
                 pass: false
