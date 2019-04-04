@@ -78,6 +78,22 @@ async function svgToPng(svgBase64, svgExtent, imageSize)
     });
 }
 
+
+//==============================================================================
+
+function transparent(image)
+{
+    for (let y = 0; y < image.bitmap.height; y += 1) {
+        for (let x = 0; x < image.bitmap.width; x += 1) {
+            const index = image.bitmap.width * y + x << 2;
+            if (image.bitmap.data[index + 3]) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 //==============================================================================
 
 class MapMaker
@@ -144,7 +160,7 @@ class MapMaker
 
                 const tile = await cropImage.cropImage(pngImage, xOffset, yOffset,
                                                        TILE_PIXEL_SIZE[0], TILE_PIXEL_SIZE[1]);
-                if (tile.hasAlpha()) {
+                if (!transparent(tile)) {
                     if (!dirExists) {
                         fs.mkdirSync(tileDirectory, {recursive: true, mode: 0o755});
                         dirExists = true;
