@@ -53,6 +53,7 @@ expect.extend({
             };
         } else {
             croppedImage.write(`${TEST_FAILURE_DIR}/${imageName}-cropped-${cropId}.png`);
+            difference.image.write(`${TEST_FAILURE_DIR}/${imageName}-difference-${cropId}.png`);
             return {
                 message: () => `expected ${croppedImageFile} to be (${x}, ${y}, ${w}, ${h}) crop of ${imageName}`,
                 pass: false
