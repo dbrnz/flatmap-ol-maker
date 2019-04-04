@@ -26,23 +26,31 @@ limitations under the License.
 const fs = require('fs');
 const path = require('path');
 
+const sizeOf = require('image-size');
 const Jimp = require('jimp');
 const puppeteer = require('puppeteer');
 
 //==============================================================================
 
-const TILE_PIXELS = [256, 256];
+const cropImage = require('./cropimage');
 
 //==============================================================================
 
-async function svgToPng(layer, svg, zoomLevel)
-{
-    const scale = 2**zoomLevel;  // some function of zoomLevel...  (map resolution)/2**zoom
+const TILE_PIXEL_SIZE = [256, 256];
 
+//==============================================================================
+
+async function svgToPng(svgBase64, svgExtent, imageSize)
+{
     const canvas = document.createElement('canvas');
-    canvas.id = `${layer.id}-${zoomLevel}-canvas`;
+    canvas.width = imageSize[0];
+    canvas.height = imageSize[1];
 
     const ctx = canvas.getContext('2d');
+
+    // Set transparent background
+    ctx.fillStyle = '#00FF00FF';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     const img = new Image();
     document.body.appendChild(img);
@@ -51,24 +59,10 @@ async function svgToPng(layer, svg, zoomLevel)
     {
         const onLoad = () =>
         {
-            let imageWidth = scale*img.naturalWidth;
-            let imageHeight = scale*img.naturalHeight;
-            canvas.width = imageWidth;
-            canvas.height = imageHeight;
-
-            // Set background color
-            ctx.fillStyle = '#00000000';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            //const clip = { x: 0, y:0, width: 640, height: 360 };
-            //ctx.drawImage(img, clip.x, clip.y, clip.width, clip.height, 0, 0, imageWidth, imageHeight);
-            ctx.drawImage(img, 0, 0, imageWidth, imageHeight);
-
+            ctx.drawImage(img, svgExtent[0], svgExtent[1], svgExtent[2], svgExtent[3],
+                               0, 0, imageSize[0], imageSize[1]);
             const dataURI = canvas.toDataURL('image/png');
             document.body.removeChild(img);
-
-            console.log('Len:', dataURI.length);
-
             resolve(dataURI);
         }
 
@@ -80,7 +74,7 @@ async function svgToPng(layer, svg, zoomLevel)
 
         img.addEventListener("load", onLoad);
         img.addEventListener("error", onError);
-        img.src = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
+        img.src = `data:image/svg+xml;base64,${svgBase64}`;
     });
 }
 
@@ -91,49 +85,94 @@ class MapMaker
 	constructor(map, outputDirectory)
 	{
         this._map = map;
-		this._id = map.id;
-		this._size = map.size;
-		this._tileDims = [Math.ceil(this._size[0]/TILE_PIXELS[0]),
-                          Math.ceil(this._size[1]/TILE_PIXELS[1])];
-        this._tiledSize = [TILE_PIXELS[0]*this._tileDims[0],
-                           TILE_PIXELS[1]*this._tileDims[1]];
+		this._tileDims = [Math.ceil(this._map.size[0]/TILE_PIXEL_SIZE[0]),
+                          Math.ceil(this._map.size[1]/TILE_PIXEL_SIZE[1])];
+        this._tiledSize = [TILE_PIXEL_SIZE[0]*this._tileDims[0],
+                           TILE_PIXEL_SIZE[1]*this._tileDims[1]];
         const maxTileDim = Math.max(this._tileDims[0], this._tileDims[1]);
         this._fullZoom = Math.ceil(Math.log2(maxTileDim));
 		this._outputDirectory = outputDirectory;
 	}
 
-    async readSvg_(svgPath)
+    /**
+     * Read a SVG file.
+     *
+     * @param      {String}   svgPath  The path of the SVG file.
+     * @return     {Promise}  A Promise resolving to a Buffer.
+     */
+    async readSvgAsBuffer_(svgPath)
     {
         return new Promise((resolve, reject) => {
-            fs.readFile(svgPath, 'utf-8', (err, data) => {
+            fs.readFile(svgPath, (err, data) => {
                 if (err) reject(err)
                 else resolve(data);
             })
         });
     }
 
-    async writeTiles_(tileData, tilePath)
+    async tileZoomLevel_(layer, zoomLevel, svgBuffer, svgExtent, imageSize, page)
     {
-        //const image = await Jimp.create(Buffer.from(tileData.substr('data:image/png;base64,'.length), 'base64'));
-        console.log('writing', tilePath);
-    //    image.write(tilePath);
-    }
+        const zoomScale = 2**(this._fullZoom - zoomLevel);
+        const zoomedSize = [imageSize[0]/zoomScale, imageSize[1]/zoomScale];
 
-    async tileZoomLevel_(layer, svg, zoomLevel, page)
-    {
-        const pngDataURI = await page.evaluate(svgToPng, layer, svg, zoomLevel);
+        const pngDataURI = await page.evaluate(svgToPng, svgBuffer.toString('base64'), svgExtent, zoomedSize);
 
-        // Now create tiles and write them out...
-        // For all x, y tiles... (a Promise for each)
-        // this.writeTiles_(pngDataURI, path_resolve(this._outputDirectory, tileName))
-        //         .then(() => resolve());
+        const pngImage = await Jimp.create(Buffer.from(pngDataURI.substr('data:image/png;base64,'.length), 'base64'));
+
+        const origin = layer.origin ? [layer.origin[0]/zoomScale, layer.origin[1]/zoomScale]
+                                    : [0, 0];
+
+        const xTileStart = Math.floor(origin[0]/TILE_PIXEL_SIZE[0]);
+        const xStart = xTileStart*TILE_PIXEL_SIZE[0] - origin[0];
+
+        const yTileStart = Math.floor(origin[1]/TILE_PIXEL_SIZE[1]);
+        const yStart = zoomedSize[1] + origin[1] - yTileStart*TILE_PIXEL_SIZE[1] - TILE_PIXEL_SIZE[1];
+
+        // Create tiles and write them out
+
+        const tilePromises = [];
+        for (let x = xTileStart, xOffset = xStart;
+             xOffset < zoomedSize[0];
+             x +=1, xOffset += TILE_PIXEL_SIZE[0]) {
+
+            const tileDirectory = path.join(this._outputDirectory, layer.id, `${zoomLevel}`, `${x}`);
+            let dirExists = fs.existsSync(tileDirectory);
+
+            for (let y = yTileStart, yOffset = yStart;
+                 yOffset > -TILE_PIXEL_SIZE[1];
+                 y +=1, yOffset -= TILE_PIXEL_SIZE[1]) {
+
+                const tile = await cropImage.cropImage(pngImage, xOffset, yOffset,
+                                                       TILE_PIXEL_SIZE[0], TILE_PIXEL_SIZE[1]);
+                if (tile.hasAlpha()) {
+                    if (!dirExists) {
+                        fs.mkdirSync(tileDirectory, {recursive: true, mode: 0o755});
+                        dirExists = true;
+                    }
+                    tilePromises.push(tile.writeAsync(path.join(tileDirectory, `${y}.png`)));
+                }
+            }
+        }
+
+        return Promise.all(tilePromises);
     }
 
     async tileLayer_(layer, browser)
     {
         console.log('Tiling', layer.id);
 
-        const svg = await this.readSvg_(layer.source);
+        const svgBuffer = await this.readSvgAsBuffer_(layer.source);
+
+        let svgExtent = layer.sourceExtent;
+        if (!svgExtent) {
+            const dimensions = sizeOf(svgBuffer);
+            svgExtent = [0, 0, dimensions.width, dimensions.height];
+        }
+
+        let imageSize = this._map.size;
+        if (layer.resolution) {
+            imageSize = [layer.resolution*svgExtent[2], layer.resolution*svgExtent[3]];
+        }
 
         const page = await browser.newPage();
         page.on('console', msg => console.log(`Layer ${layer.id}:`, msg.text()));
@@ -141,13 +180,10 @@ class MapMaker
         // Tile all zoom levels in the layer
 
         const zoomPromises = [];
-
-        for (const zoomLevel of [0, 1]) {
-            zoomPromises.push(this.tileZoomLevel_(layer, svg, zoomLevel, page));
+        const zoomRange = layer.zoom || [0, this._fullZoom];
+        for (let z = zoomRange[0]; z <= zoomRange[1]; z += 1) {
+            zoomPromises.push(this.tileZoomLevel_(layer, z, svgBuffer, svgExtent, imageSize, page));
         }
-
-        // Wait for zoom level tiling to complete
-
         await Promise.all(zoomPromises);
     }
 
@@ -171,71 +207,6 @@ class MapMaker
 
         await browser.close();
     }
-
-
-
-/*
-		layer.source
-
-        if scale is None {
-            scaled_image = image.image
-        }
-        else {
-            scaled_size = [scale[0]*image.width, scale[1]*image.height]
-            scaled_image = image.image.resize(scaled_size, Image.LANCZOS)
-        }
-
-        tiled_image = Image.new('RGBA', this._tiledSize, (0, 0, 0, 0))
-
-        if offset is None {
-            offset = [0, 0]
-        }
-        else {
-            // PIL origin is top left, map's is bottom right
-            offset[1] = (this._map.bounds[1] - offset[1]) - scaled_image.height
-        }
-
-        overview_height = this._map.bounds[1]
-        offset[1] += (this._tiledSize[1] - overview_height)
-        tiled_image.paste(scaled_image, offset, scaled_image)
-
-        // Divide tiled_image into TILE_PIXELS tiles, only outputting non-transparent
-        // tiles.
-
-        if zoom_range is None {
-            zoom_range = range(this._fullZoom+1)
-        }
-
-        tiled_size = this._tileDims
-        for z in range(this._fullZoom, -1, -1) {
-            if z in zoom_range {
-                console.log(`Tiling zoom level ${z} (${tiled_size[0]} x ${tiled_size[0]} tiles)`);
-            }
-            overview_image = Image.new('RGBA', (tiled_image.width//2, tiled_image.height//2), (0, 0, 0, 0))
-            overview_size = (int(math.ceil(tiled_size[0]/2)), int(math.ceil(tiled_size[1]/2)))
-            overview_height //= 2
-            let left = 0;
-            for x in range(tiled_size[0]) {
-                lower = tiled_image.height
-                for y in range(tiled_size[1]) {   // y = 0 is lowest tile row
-                    tile = tiled_image.crop((left, lower-TILE_PIXELS[1], left+TILE_PIXELS[0], lower))
-                    tile_name = os.path.join(this._map.id, 'tiles', image.layer_name, str(z), str(x), '{}.png'.format(y))
-                    if tile.getbbox() {
-                        if z in zoom_range {
-                            create_directories(tile_name)
-                            tile.save(tile_name)
-                        }
-                        half_tile = tile.resize((TILE_PIXELS[0]/2, TILE_PIXELS[1]/2), Image.LANCZOS)
-                        overview_image.paste(half_tile, (left//2, (lower-TILE_PIXELS[1])/2), half_tile)
-                    }
-                    lower -= TILE_PIXELS[1];
-                }
-                left += TILE_PIXELS[0];
-            }
-            tiled_image = overview_image
-            tiled_size = overview_size
-        }
-*/
 }
 
 //==============================================================================
