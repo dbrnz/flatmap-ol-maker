@@ -243,6 +243,33 @@ class MapMaker
 
         await browser.close();
     }
+
+    writeIndex()
+    //==========
+    {
+        const index = {
+             id: this._map.id,
+             size: this._map.size,
+             layerSwitcher: true,  // via class of containg div ??
+             // overviewMap: true,   // Currently ignored, HTML styling class??
+             // features: true,      // deprecated
+             // editable: true,      // Depends on user level
+             layers: []
+        };
+
+        for (const layer of this._map.layers) {
+            const attributes = {
+                id: layer.id,
+                source: layer.id
+            };
+            if (layer.title) {
+                attributes.title = layer.title;
+            }
+            index.layers.push(attributes);
+        }
+
+        fs.writeFileSync(path.join(this._outputDirectory, 'index.json'), JSON.stringify(index, null, 2));
+    }
 }
 
 //==============================================================================
@@ -283,6 +310,7 @@ function main()
 
 	try {
         mapMaker.makeTiles();
+        mapMaker.writeIndex();
 	} catch (e) {
 		console.error(e.message);
 	}
