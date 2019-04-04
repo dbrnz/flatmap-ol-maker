@@ -108,7 +108,8 @@ class MapMaker
                            TILE_PIXEL_SIZE[1]*this._tileDims[1]];
         const maxTileDim = Math.max(this._tileDims[0], this._tileDims[1]);
         this._fullZoom = Math.ceil(Math.log2(maxTileDim));
-		this._outputDirectory = outputDirectory;
+        this._outputDirectory = outputDirectory;
+		this._tileDirectory = path.join(outputDirectory, 'tiles');
 	}
 
     /**
@@ -152,7 +153,7 @@ class MapMaker
              xOffset < zoomedSize[0];
              x +=1, xOffset += TILE_PIXEL_SIZE[0]) {
 
-            const tileDirectory = path.join(this._outputDirectory, layer.id, `${zoomLevel}`, `${x}`);
+            const tileDirectory = path.join(this._tileDirectory, layer.id, `${zoomLevel}`, `${x}`);
             let dirExists = fs.existsSync(tileDirectory);
 
             for (let y = yTileStart, yOffset = yStart;
@@ -294,16 +295,20 @@ function main()
   	}
 
 	const map = JSON.parse(fs.readFileSync(specification));
+    map.inputDirectory = specDir;
 
 	for (const layer of map.layers) {
-        // Relative paths wrt the specification file's directory
-        if (!path.isAbsolute(layer.source)) {
-            layer.source = path.resolve(specDir, layer.source);
-        }
-	 	if (!fs.existsSync(path.resolve(layer.source))) {
-		  	console.error(`SVG file '${layer.source} does not exist`);
+        // Paths are wrt the specification file's directory
+        const sourceFile = path.resolve(map.inputDirectory,
+                               (layer.sourceType === 'celldl') ? path.join('celldl', `${layer.id}.xml`)
+                             : (layer.sourceType === 'svg') ? path.join('svg', `${layer.id}.svg`)
+                             :                                path.join('svg', `${layer.id}.svg`)  // Default to SVG
+                           );
+	 	if (!fs.existsSync(sourceFile)) {
+		  	console.error(`Source file '${sourceFile} does not exist`);
 	  		process.exit(-1);
 	  	}
+        layer.source = sourceFile;
 	}
 
 	const mapMaker = new MapMaker(map, outputDirectory);
