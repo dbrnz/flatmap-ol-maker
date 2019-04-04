@@ -1,0 +1,74 @@
+{
+    "id": "body",
+    "size": [10000, 18000],
+    "layers": [
+        {
+            "id": "head",
+            "sourceType": "svg",
+            "sourceExtent": [200, 0, 400, 720]
+        }, {
+            "id": "cardiovascular",
+            "title": "Cardiovascular",
+            "sourceType": "svg",
+            "sourceExtent": [200, 0, 400, 720]
+        }, {
+            "id": "brownfat",
+            "title": "Brownfat",
+            "sourceType": "svg",
+            "sourceExtent": [200, 0, 400, 720]
+        }, {
+            "id": "respiratory",
+            "title": "Respiratory",
+            "sourceType": "svg",
+            "sourceExtent": [200, 0, 400, 720]
+        }, {
+            "id": "digestive",
+            "title": "Digestive",
+            "sourceType": "svg",
+            "sourceExtent": [200, 0, 400, 720]
+        }, {
+            "id": "exocrine",
+            "title": "Exocrine",
+            "sourceType": "svg",
+            "sourceExtent": [200, 0, 400, 720]
+        }, {
+            "id": "endocrine",
+            "title": "Endocrine",
+            "sourceType": "svg",
+            "sourceExtent": [200, 0, 400, 720]
+        }, {
+            "id": "urinary",
+            "title": "Urinary",
+            "sourceType": "svg",
+            "sourceExtent": [200, 0, 400, 720]
+        }, {
+            "id": "reproductive",
+            "title": "Reproductive",
+            "sourceType": "svg",
+            "sourceExtent": [200, 0, 400, 720]
+        }, {
+            "id": "spine",
+            "title": "Spine",
+            "sourceType": "svg",
+            "sourceExtent": [200, 0, 400, 720]
+        }, {
+            "id": "ganglia",
+            "title": "Ganglia",
+            "sourceType": "svg",
+            "sourceExtent": [200, 0, 400, 720]
+        }, {
+            "id": "neural",
+            "title": "Neural",
+            "sourceType": "svg",
+            "sourceExtent": [200, 0, 400, 720]
+        }, {
+            "id": "brainstem",
+            "title": "Brainstem",
+            "sourceType": "svg",
+            "sourceExtent": [390, 80, 345, 385],
+            "resolution": 8,
+            "origin": [3600, 13500],
+            "zoom": [5, 7]
+        }
+    ]
+}

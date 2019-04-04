@@ -1,0 +1,745 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "ganglia-24",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            4546.6,
+            11263.43
+          ],
+          [
+            4524.88,
+            11198.39
+          ],
+          [
+            4506.6,
+            11069.39
+          ]
+        ]
+      },
+      "properties": {
+        "interpolation": "cspline"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ganglia-2",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            4546.6,
+            11263.43
+          ],
+          [
+            4740.36,
+            11173.64
+          ]
+        ]
+      },
+      "properties": {
+        "interpolation": "cspline"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ganglia-3",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          9050,
+          15125
+        ]
+      },
+      "properties": {
+        "name": "ix",
+        "textAlign": "left"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ganglia-4",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            4526.21,
+            13754.36
+          ],
+          [
+            4714.18,
+            13688.03
+          ]
+        ]
+      },
+      "properties": {
+        "interpolation": "cspline"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ganglia-5",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          9050,
+          15450
+        ]
+      },
+      "properties": {
+        "name": "vii",
+        "textAlign": "left"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ganglia-6",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            4526.21,
+            13754.36
+          ],
+          [
+            4635.34,
+            13878.77
+          ]
+        ]
+      },
+      "properties": {
+        "interpolation": "cspline"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ganglia-7",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          9050,
+          14850
+        ]
+      },
+      "properties": {
+        "name": "x (vagus)",
+        "textAlign": "left"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ganglia-8",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            1926.6,
+            13362.33
+          ],
+          [
+            2091.79,
+            13321.37
+          ],
+          [
+            2334.2,
+            13253.13
+          ],
+          [
+            2497.64,
+            13227.05
+          ],
+          [
+            2712.25,
+            13225.35
+          ],
+          [
+            2883.76,
+            13242.39
+          ],
+          [
+            3102.38,
+            13284.12
+          ],
+          [
+            3268.16,
+            13326.95
+          ],
+          [
+            3439.83,
+            13406.17
+          ],
+          [
+            3671.29,
+            13526.54
+          ],
+          [
+            3901.66,
+            13617.77
+          ],
+          [
+            4119.17,
+            13680.54
+          ],
+          [
+            4309.67,
+            13713.82
+          ],
+          [
+            4526.21,
+            13754.36
+          ]
+        ]
+      },
+      "properties": {
+        "interpolation": "cspline"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ganglia-9",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1926.6,
+          13362.33
+        ]
+      },
+      "properties": {
+        "interpolation": "cspline"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ganglia-10",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            5538.29,
+            16344.63
+          ],
+          [
+            5146.21,
+            16322.53
+          ],
+          [
+            4832.66,
+            16287.18
+          ],
+          [
+            4528.57,
+            16230.44
+          ],
+          [
+            4146.88,
+            16127.38
+          ],
+          [
+            3769.34,
+            15964.55
+          ],
+          [
+            3570.97,
+            15835.41
+          ],
+          [
+            3394.73,
+            15686.02
+          ],
+          [
+            3195.19,
+            15451.71
+          ],
+          [
+            3048.56,
+            15340.99
+          ],
+          [
+            2775.18,
+            15181.97
+          ],
+          [
+            2502.86,
+            15075.03
+          ],
+          [
+            2214.49,
+            14989.86
+          ],
+          [
+            1994.5,
+            14913.36
+          ]
+        ]
+      },
+      "properties": {
+        "interpolation": "cspline"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ganglia-11",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            3788.28,
+            16329.78
+          ],
+          [
+            3510.47,
+            16294.07
+          ],
+          [
+            3314.36,
+            16228.11
+          ],
+          [
+            3089.97,
+            16113.36
+          ],
+          [
+            2892.23,
+            15943.11
+          ],
+          [
+            2793.26,
+            15816.41
+          ],
+          [
+            2705.73,
+            15664.64
+          ],
+          [
+            2555.64,
+            15366.2
+          ],
+          [
+            2326.69,
+            15115.8
+          ],
+          [
+            1996.25,
+            14923.81
+          ]
+        ]
+      },
+      "properties": {
+        "interpolation": "cspline"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ganglia-12",
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [[
+          [
+            1989.76,
+            14917.54
+          ],
+          [
+            2268.6,
+            14944.88
+          ],
+          [
+            2974.47,
+            15014.3
+          ],
+          [
+            3636.25,
+            15145.03
+          ],
+          [
+            4010.69,
+            15196.42
+          ],
+          [
+            4515.94,
+            15219.73
+          ],
+          [
+            4838.98,
+            15220.91
+          ]
+        ],[
+          [
+            3890.26,
+            15179.89
+          ],
+          [
+            4038.67,
+            15114.25
+          ],
+          [
+            4135.27,
+            15053.76
+          ],
+          [
+            4218.81,
+            14961.74
+          ],
+          [
+            4239.16,
+            14865.31
+          ],
+          [
+            4237.04,
+            14772.98
+          ],
+          [
+            4198.06,
+            14675.17
+          ],
+          [
+            4139.18,
+            14574.12
+          ]
+        ]]
+      },
+      "properties": {
+        "interpolation": "cspline"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ganglia-13",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1984,
+          14917.43
+        ]
+      },
+      "properties": {
+        "interpolation": "cspline"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ganglia-15",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            4880.89,
+            15910.2
+          ],
+          [
+            4486.02,
+            15887.54
+          ],
+          [
+            4185.34,
+            15837.32
+          ],
+          [
+            3953.24,
+            15777.24
+          ],
+          [
+            3670.06,
+            15650.13
+          ],
+          [
+            3271.96,
+            15375.73
+          ],
+          [
+            2781.42,
+            15130.89
+          ],
+          [
+            1983.36,
+            14918.44
+          ]
+        ]
+      },
+      "properties": {
+        "interpolation": "cspline"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ganglia-16",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            1967.06,
+            12542.48
+          ],
+          [
+            2085.2,
+            12578.9
+          ],
+          [
+            2249.14,
+            12696.53
+          ],
+          [
+            2377.85,
+            12836.2
+          ],
+          [
+            2516.65,
+            13005.2
+          ],
+          [
+            2627.98,
+            13118.29
+          ],
+          [
+            2745.55,
+            13199.77
+          ],
+          [
+            2963.38,
+            13251.11
+          ],
+          [
+            3237.99,
+            13284.39
+          ],
+          [
+            3386.41,
+            13275.09
+          ],
+          [
+            3578.05,
+            13222.84
+          ],
+          [
+            3760.61,
+            13098.68
+          ],
+          [
+            3889.74,
+            12958.05
+          ],
+          [
+            3997.65,
+            12801.91
+          ],
+          [
+            4164.18,
+            12487.84
+          ],
+          [
+            4303.39,
+            12119.1
+          ],
+          [
+            4417.84,
+            11748.61
+          ],
+          [
+            4546.6,
+            11263.43
+          ]
+        ]
+      },
+      "properties": {
+        "interpolation": "cspline"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ganglia-17",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1967.06,
+          12542.48
+        ]
+      },
+      "properties": {
+        "interpolation": "cspline"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ganglia-18",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            1957.76,
+            12147.85
+          ],
+          [
+            2068.74,
+            12151.06
+          ],
+          [
+            2162.16,
+            12193.49
+          ],
+          [
+            2276.65,
+            12291.29
+          ],
+          [
+            2354.01,
+            12412.48
+          ],
+          [
+            2418.74,
+            12537.27
+          ],
+          [
+            2504.98,
+            12750.94
+          ],
+          [
+            2590.31,
+            12918.63
+          ],
+          [
+            2682.74,
+            13072.65
+          ],
+          [
+            2786.01,
+            13170.65
+          ],
+          [
+            2892.6,
+            13219.2
+          ],
+          [
+            2989.37,
+            13234.21
+          ],
+          [
+            3088.76,
+            13216.86
+          ],
+          [
+            3159.85,
+            13178.92
+          ],
+          [
+            3212.87,
+            13134.4
+          ],
+          [
+            3258.74,
+            13061.74
+          ],
+          [
+            3278.99,
+            12988.43
+          ],
+          [
+            3291.83,
+            12922.59
+          ]
+        ]
+      },
+      "properties": {
+        "interpolation": "cspline"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ganglia-19",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1957.76,
+          12147.85
+        ]
+      },
+      "properties": {
+        "interpolation": "cspline"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ganglia-20",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            3291.83,
+            12922.59
+          ],
+          [
+            3194.21,
+            12805.34
+          ]
+        ]
+      },
+      "properties": {
+        "interpolation": "cspline"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ganglia-21",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            3291.83,
+            12922.59
+          ],
+          [
+            3463.98,
+            12859.65
+          ]
+        ]
+      },
+      "properties": {
+        "interpolation": "cspline"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ganglia-22",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1944.23,
+          12957.31
+        ]
+      },
+      "properties": {
+        "interpolation": "cspline"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ganglia-23",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            1944.23,
+            12957.31
+          ],
+          [
+            2071.48,
+            13009.84
+          ],
+          [
+            2439.39,
+            13125.21
+          ],
+          [
+            2883.76,
+            13242.39
+          ]
+        ]
+      },
+      "properties": {
+        "interpolation": "cspline"
+      }
+    }
+  ]
+}
