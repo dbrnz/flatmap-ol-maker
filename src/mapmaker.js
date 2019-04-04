@@ -119,6 +119,7 @@ class MapMaker
      * @return     {Promise}  A Promise resolving to a Buffer.
      */
     async readSvgAsBuffer_(svgPath)
+    //=============================
     {
         return new Promise((resolve, reject) => {
             fs.readFile(svgPath, (err, data) => {
@@ -129,6 +130,7 @@ class MapMaker
     }
 
     async tileZoomLevel_(layer, zoomLevel, svgBuffer, svgExtent, imageSize, page)
+    //===========================================================================
     {
         const zoomScale = 2**(this._fullZoom - zoomLevel);
         const zoomedSize = [imageSize[0]/zoomScale, imageSize[1]/zoomScale];
@@ -177,6 +179,7 @@ class MapMaker
     }
 
     async tileLayer_(layer, browser)
+    //==============================
     {
         const svgBuffer = await this.readSvgAsBuffer_(layer.source);
 
@@ -225,6 +228,7 @@ class MapMaker
     }
 
     async makeTiles()
+    //===============
     {
         const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-dev-shm-usage']});
 
