@@ -68,37 +68,51 @@ async function cropImage(image, x, y, w, h)
             imageBitmapData.copy(croppedBitmapData, cropStartRow*w, imageStartRow*imageRowBytes, imageEndRow*imageRowBytes);
         } else {
 /*
-            |_____xxx|    bb + d = w          x = 0, d bytes into bb
-            |xxx_____|    d + bb = w          x = x, d bytes into 0
-            |xxxxxxxx|    bb = 0, d = w       x = x, b bytes into 0
+            |_____xxx|    lb + d = w, rb = 0          lb at 0, d bytes at lb, lb = w - d
+            |xxx_____|    d + rb = w, lb = 0          d bytes at 0, rb at d, rb = w - d
+            |xxxxxxxx|    lb = 0, d = w, rb = 0       d bytes at 0
+            |__xxx___|    lb + d + rb = w             lb at 0, d bytes at lb, rb at (lb + d)
 */
-            let blankRow = null;
-            let blankBytes = 0;
-            let blankOffset = 0;
+
+
             let croppedOffset = 0;
             let imageRowOffset = 0;
-            if (x < 0) {
-                blankBytes = -x*4;
-                croppedOffset = blankBytes;
-                x = 0;
-            } else if ((x + w) > imageWidth) {
-                blankBytes = (x + w - imageWidth)*4;
-                blankOffset = croppedRowBytes - blankBytes;
-            }
-            if (blankBytes) {
-                blankRow = Buffer.alloc(blankBytes, 0);
+            let leftBlankStart = 0;
+            let rightBlankStart = croppedRowBytes;
+
+            let rightBlanks = null;
+            if ((x + w) > imageWidth) {
+                const blankBytes = (x + w - imageWidth)*4;
+                rightBlanks = Buffer.alloc(blankBytes, 0);
+                rightBlankStart -= blankBytes;
             }
 
-            blankOffset += (cropStartRow*croppedRowBytes);
+            let leftBlanks = null;
+            if (x < 0) {
+                const blankBytes = -x*4;
+                leftBlanks = Buffer.alloc(blankBytes, 0);
+                croppedOffset = blankBytes;
+                x = 0;
+            }
+
             croppedOffset += (cropStartRow*croppedRowBytes);
             imageRowOffset += (imageStartRow*imageRowBytes + x*4);
-            let imageRowEnd = imageRowOffset + (croppedRowBytes - blankBytes);
+            leftBlankStart += (cropStartRow*croppedRowBytes);
+            rightBlankStart += (cropStartRow*croppedRowBytes);
+            let imageRowEnd = imageRowOffset + croppedRowBytes;
+            if (rightBlanks) {
+                imageRowEnd -= rightBlanks.length;
+            }
             while (cropStartRow < cropEndRow) {
-                if (blankBytes) {
-                    blankRow.copy(croppedBitmapData, blankOffset);
+                if (leftBlanks) {
+                    leftBlanks.copy(croppedBitmapData, leftBlankStart);
                 }
                 imageBitmapData.copy(croppedBitmapData, croppedOffset, imageRowOffset, imageRowEnd);
-                blankOffset += croppedRowBytes;
+                if (rightBlanks) {
+                    rightBlanks.copy(croppedBitmapData, rightBlankStart);
+                }
+                leftBlankStart += croppedRowBytes;
+                rightBlankStart += croppedRowBytes;
                 croppedOffset += croppedRowBytes;
                 imageRowOffset += imageRowBytes;
                 imageRowEnd += imageRowBytes;
