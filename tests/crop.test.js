@@ -35,9 +35,6 @@ const cropImage = require('../src/cropimage');
 const TEST_IMAGE_DIR = 'tests/data';
 const TEST_FAILURE_DIR = 'tests/fails';
 
-const TEST_IMAGE_1 = 'test-image';        // 345 x 385
-const TEST_IMAGE_2 = 'circle-125x125';    // 125 x 125
-
 //==============================================================================
 
 expect.extend({
@@ -72,6 +69,8 @@ beforeAll(() => {
 //==============================================================================
 
 test('image cropping test 1', async () => {
+    const TEST_IMAGE_1 = 'test-image';           // 345 x 385
+
     const image = await new Jimp.read(`${TEST_IMAGE_DIR}/${TEST_IMAGE_1}.png`);
     await expect('a').toBeCroppedImage(image, TEST_IMAGE_1, 0, 0, 345, 385);
     await expect('b').toBeCroppedImage(image, TEST_IMAGE_1, 0, 0, 345, 190);
@@ -90,6 +89,8 @@ test('image cropping test 1', async () => {
 //==============================================================================
 
 test('image cropping test 2', async () => {
+    const TEST_IMAGE_2 = 'circle-125x125';       // 125 x 125
+
     const image = await new Jimp.read(`${TEST_IMAGE_DIR}/${TEST_IMAGE_2}.png`);
     await expect('125-6').toBeCroppedImage(image, TEST_IMAGE_2, -125, -6, 256, 256);
 });
