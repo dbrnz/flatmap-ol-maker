@@ -23,7 +23,7 @@ limitations under the License.
 
 //==============================================================================
 
-const fs = require('fs');
+const fs = require('fs-extra');
 const path = require('path');
 
 const sizeOf = require('image-size');
