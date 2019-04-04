@@ -169,14 +169,13 @@ class MapMaker
                 }
             }
         }
+        console.log(`Tiled ${layer.id} at zoom level ${zoomLevel}`)
 
         return Promise.all(tilePromises);
     }
 
     async tileLayer_(layer, browser)
     {
-        console.log('Tiling', layer.id);
-
         const svgBuffer = await this.readSvgAsBuffer_(layer.source);
 
         let svgExtent = layer.sourceExtent;
