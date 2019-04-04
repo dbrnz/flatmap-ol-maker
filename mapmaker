@@ -1,0 +1,5 @@
+#!/usr/bin/env node
+
+const mapMaker = require('./src/mapmaker');
+
+mapMaker.main();
