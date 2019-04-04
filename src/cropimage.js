@@ -100,6 +100,9 @@ async function cropImage(image, x, y, w, h)
             leftBlankStart += (cropStartRow*croppedRowBytes);
             rightBlankStart += (cropStartRow*croppedRowBytes);
             let imageRowEnd = imageRowOffset + croppedRowBytes;
+            if (leftBlanks) {
+                imageRowEnd -= leftBlanks.length;
+            }
             if (rightBlanks) {
                 imageRowEnd -= rightBlanks.length;
             }
