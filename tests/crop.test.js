@@ -95,3 +95,12 @@ test('image cropping test 2', async () => {
 });
 
 //==============================================================================
+
+test('image cropping test 3', async () => {
+    const TEST_IMAGE_3 = 'brainstem-603x763';    // 603 x 763
+
+    const image = await new Jimp.read(`${TEST_IMAGE_DIR}/${TEST_IMAGE_3}.png`);
+    await expect('-132-465').toBeCroppedImage(image, TEST_IMAGE_3, -132, 464.75, 256, 256);
+});
+
+//==============================================================================
