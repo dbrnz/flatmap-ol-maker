@@ -23,6 +23,7 @@ limitations under the License.
 
 //==============================================================================
 
+const crypto = require('crypto');
 const fs = require('fs-extra');
 const path = require('path');
 
@@ -189,17 +190,37 @@ class MapMaker
             imageSize = [layer.resolution*svgExtent[2], layer.resolution*svgExtent[3]];
         }
 
+        const zoomRange = layer.zoom || [0, this._fullZoom];
+
+        // Only generate tiles if SVG and/or map and/or layer attributes have changed
+
+        let md5Hash = crypto.createHash('md5')
+                           .update(layer.id)
+                           .update(svgBuffer)
+                           .update(JSON.stringify(this._map.size))
+                           .update(JSON.stringify(layer.sourceExtent || []))
+                           .update(JSON.stringify(layer.resolution || 1))
+                           .update(JSON.stringify(zoomRange))
+                           .digest("hex");
+        const md5File = path.join(this._tileDirectory, layer.id, 'layer.md5');
+        if (fs.existsSync(md5File) && fs.readFileSync(md5File, 'utf-8') === md5Hash) {
+            return;
+        }
+
         const page = await browser.newPage();
         page.on('console', msg => console.log(`Layer ${layer.id}:`, msg.text()));
 
         // Tile all zoom levels in the layer
 
         const zoomPromises = [];
-        const zoomRange = layer.zoom || [0, this._fullZoom];
         for (let z = zoomRange[0]; z <= zoomRange[1]; z += 1) {
             zoomPromises.push(this.tileZoomLevel_(layer, z, svgBuffer, svgExtent, imageSize, page));
         }
         await Promise.all(zoomPromises);
+
+        // Save md5 hash with layer
+
+        fs.writeFileSync(md5File, md5Hash);
     }
 
     async makeTiles()
