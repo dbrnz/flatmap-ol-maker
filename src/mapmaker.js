@@ -81,14 +81,45 @@ async function svgToPng(svgBase64, svgExtent, imageSize)
 
 //==============================================================================
 
+/**
+ * Add transparency to an image.
+ *
+ * @param      {Jimp}   image                A Jimp image
+ * @param      {String}   transparentColour  The transparent colour as a CSS colour value
+ * @return     {boolean}  true if the resulting image is fully transparent
+ */
+function makeTransparent(image, transparentColour)
+{
+    let transparent = undefined;
+    if (transparentColour !== undefined) {
+        transparent = true;
+        const colour = Jimp.cssColorToHex(transparentColour);
+        const imageBitmapData = image.bitmap.data;
+        for (let index = 0; index < imageBitmapData.length; index += 4) {
+            if (colour === imageBitmapData.readUInt32BE(index)) {
+                imageBitmapData.fill(0, index, index+4);
+            } else if (transparent && imageBitmapData[index + 3]) {
+                transparent = false;
+            }
+        }
+    }
+    return transparent;
+}
+
+//==============================================================================
+
+/**
+ * Test if an image is transparent.
+ *
+ * @param      {Jimp}   image   A Jimp image
+ * @return     {boolean}  true if the resulting image is fully transparent
+ */
 function transparent(image)
 {
-    for (let y = 0; y < image.bitmap.height; y += 1) {
-        for (let x = 0; x < image.bitmap.width; x += 1) {
-            const index = image.bitmap.width * y + x << 2;
-            if (image.bitmap.data[index + 3]) {
-                return false;
-            }
+    const imageBitmapData = image.bitmap.data;
+    for (let index = 0; index < imageBitmapData.length; index += 4) {
+        if (imageBitmapData[index + 3]) {
+            return false;
         }
     }
     return true;
@@ -163,7 +194,7 @@ class MapMaker
 
                 const tile = await cropImage.cropImage(pngImage, xOffset, yOffset,
                                                        TILE_PIXEL_SIZE[0], TILE_PIXEL_SIZE[1]);
-                if (!transparent(tile)) {
+                if (!makeTransparent(tile, layer.transparent) && !transparent(tile)) {
                     if (!dirExists) {
                         fs.mkdirSync(tileDirectory, {recursive: true, mode: 0o755});
                         dirExists = true;
@@ -203,6 +234,7 @@ class MapMaker
                            .update(JSON.stringify(this._map.size))
                            .update(JSON.stringify(layer.sourceExtent || []))
                            .update(JSON.stringify(layer.resolution || 1))
+                           .update(JSON.stringify(layer.transparent || null))
                            .update(JSON.stringify(zoomRange))
                            .digest("hex");
         const md5File = path.join(this._tileDirectory, layer.id, 'layer.md5');
