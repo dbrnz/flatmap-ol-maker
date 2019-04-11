@@ -245,6 +245,13 @@ class MapMaker
         const page = await browser.newPage();
         page.on('console', msg => console.log(`Layer ${layer.id}:`, msg.text()));
 
+        // Remove any existing tiles for the layer
+
+        const tileDirectory = path.join(this._tileDirectory, layer.id);
+        if (fs.existsSync(tileDirectory)) {
+            fs.removeSync(tileDirectory);
+        }
+
         // Tile all zoom levels in the layer
 
         const zoomPromises = [];
