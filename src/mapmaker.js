@@ -313,8 +313,7 @@ class MapMaker
 
         for (const layer of this._map.layers) {
             const attributes = {
-                id: layer.id,
-                source: layer.id
+                id: layer.id
             };
             if (layer.title) {
                 attributes.title = layer.title;
