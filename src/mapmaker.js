@@ -318,6 +318,9 @@ class MapMaker
             if (layer.title) {
                 attributes.title = layer.title;
             }
+            if (layer.zoom) {
+                attributes.zoom = layer.zoom;
+            }
             index.layers.push(attributes);
         }
 
