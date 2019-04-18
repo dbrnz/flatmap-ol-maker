@@ -17,6 +17,7 @@
   "devDependencies": {
     "@babel/core": "^7.4.3",
     "@babel/preset-env": "^7.4.3",
+    "argparse": "^1.0.10",
     "babel-jest": "^24.6.0",
     "eslint": "^5.15.3",
     "jest": "^24.6.0"
