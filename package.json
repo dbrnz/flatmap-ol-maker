@@ -1,5 +1,9 @@
 {
   "name": "mapmaker",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dbrnz/mapmaker.git"
+  },
   "version": "0.4.1",
   "description": "Flatmap making tools",
   "main": "index.js",
