@@ -25,6 +25,8 @@ limitations under the License.
 const fs = require('fs-extra');
 const path = require('path');
 
+const ArgumentParser = require('argparse').ArgumentParser;
+
 //==============================================================================
 
 const tilemaker = require('./tilemaker');
@@ -90,19 +92,28 @@ class MapMaker
 
 function main()
 {
-	if (process.argv.length < 4) {
-	  	console.error('Usage: mapmaker SPECIFICATION OUTPUT_DIRECTORY');
-  		process.exit(-1);
-	}
+    const argumentParser = new ArgumentParser({
+          description: 'Create tiled flatmaps', version: '0.4.1'
+    });
+    argumentParser.addArgument('specification', {
+        metavar: 'SPECIFICATION_DIRECTORY',
+        help: `Directory containing the map's 'mapmaker.json' specification file
+               and image and feature sub-directories.`
+    });
+    argumentParser.addArgument('output', {
+        metavar: 'OUTPUT_DIRECTORY',
+        help: 'Directory in which to create the tiled map.'
+    });
+    const args = argumentParser.parseArgs();
 
-	const specification = process.argv[2];
- 	if (!fs.existsSync(path.resolve(specification))) {
-	  	console.error(`File '${specification} does not exist`);
+    const specDir = args.specification;
+    const specification = path.resolve(specDir, 'mapmaker.json');
+ 	if (!fs.existsSync(specification)) {
+	  	console.error(`File '${specification}' does not exist`);
   		process.exit(-1);
   	}
-    const specDir = path.dirname(path.resolve(specification));
 
-	const outputDirectory = process.argv[3];
+	const outputDirectory = args.output;
  	if (!fs.existsSync(path.resolve(outputDirectory))) {
         fs.mkdirSync(outputDirectory, {recursive: true, mode: 0o755});
   	}
