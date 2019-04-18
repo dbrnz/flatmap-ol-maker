@@ -42,7 +42,7 @@ class MapMaker
         this._outputDirectory = outputDirectory;
 
         this._tileMaker = new tilemaker.TileMaker(map, outputDirectory);
-        this._featuresMaker = new tilemaker.FeaturesMaker(map, outputDirectory);
+        this._featuresMaker = new featuresmaker.FeaturesMaker(map, outputDirectory);
 	}
 
 
