@@ -36,14 +36,14 @@ const featuresmaker = require('./featuresmaker');
 
 class MapMaker
 {
-	constructor(map, outputDirectory, args)
-	{
+    constructor(map, outputDirectory, args)
+    {
         this._map = map;
         this._outputDirectory = outputDirectory;
 
         this._tileMaker = new tilemaker.TileMaker(map, outputDirectory, args);
         this._featuresMaker = new featuresmaker.FeaturesMaker(map, outputDirectory, args);
-	}
+    }
 
 
     makeFeatures(layer=null)
@@ -124,36 +124,36 @@ function main()
 
     const specDir = args.specification;
     const specification = path.resolve(specDir, 'mapmaker.json');
- 	if (!fs.existsSync(specification)) {
-	  	console.error(`File '${specification}' does not exist`);
-  		process.exit(-1);
-  	}
+    if (!fs.existsSync(specification)) {
+        console.error(`File '${specification}' does not exist`);
+        process.exit(-1);
+    }
 
-	const outputDirectory = args.output;
- 	if (!fs.existsSync(path.resolve(outputDirectory))) {
+    const outputDirectory = args.output;
+    if (!fs.existsSync(path.resolve(outputDirectory))) {
         fs.mkdirSync(outputDirectory, {recursive: true, mode: 0o755});
-  	}
+    }
 
-	const map = JSON.parse(fs.readFileSync(specification));
+    const map = JSON.parse(fs.readFileSync(specification));
     map.inputDirectory = specDir;
 
-	for (const layer of map.layers) {
+    for (const layer of map.layers) {
         // Paths are wrt the specification file's directory
         const sourceFile = path.resolve(map.inputDirectory,
                                (layer.sourceType === 'celldl') ? path.join('celldl', `${layer.id}.xml`)
                              : (layer.sourceType === 'svg') ? path.join('svg', `${layer.id}.svg`)
                              :                                path.join('svg', `${layer.id}.svg`)  // Default to SVG
                            );
-	 	if (!fs.existsSync(sourceFile)) {
-		  	console.error(`Source file '${sourceFile} does not exist`);
-	  		process.exit(-1);
-	  	}
+        if (!fs.existsSync(sourceFile)) {
+            console.error(`Source file '${sourceFile} does not exist`);
+            process.exit(-1);
+        }
         layer.source = sourceFile;
-	}
+    }
 
-	const mapMaker = new MapMaker(map, outputDirectory, args);
+    const mapMaker = new MapMaker(map, outputDirectory, args);
 
-	try {
+    try {
         if (!args.noTiles) {
             mapMaker.makeTiles(args.layer[0]);
         }
@@ -163,9 +163,9 @@ function main()
         if (args.layer[0] === null) {
             mapMaker.writeIndex();
         }
-	} catch (e) {
-		console.error(e.message);
-	}
+    } catch (e) {
+        console.error(e.message);
+    }
 }
 
 //==============================================================================

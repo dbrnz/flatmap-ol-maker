@@ -129,19 +129,19 @@ function transparent(image)
 
 class TileMaker
 {
-	constructor(map, outputDirectory, args)
-	{
+    constructor(map, outputDirectory, args)
+    {
         this._map = map;
-		this._tileDims = [Math.ceil(this._map.size[0]/TILE_PIXEL_SIZE[0]),
+        this._tileDims = [Math.ceil(this._map.size[0]/TILE_PIXEL_SIZE[0]),
                           Math.ceil(this._map.size[1]/TILE_PIXEL_SIZE[1])];
         this._tiledSize = [TILE_PIXEL_SIZE[0]*this._tileDims[0],
                            TILE_PIXEL_SIZE[1]*this._tileDims[1]];
         const maxTileDim = Math.max(this._tileDims[0], this._tileDims[1]);
         this._fullZoom = Math.ceil(Math.log2(maxTileDim));
         this._outputDirectory = outputDirectory;
-		this._tileDirectory = path.join(outputDirectory, 'tiles');
+        this._tileDirectory = path.join(outputDirectory, 'tiles');
         this._args = args;
-	}
+    }
 
     async tileZoomLevel_(layer, layerTileDirectory, zoomLevel, svgBuffer, svgExtent, imageSize, page)
     //===============================================================================================
@@ -230,7 +230,7 @@ class TileMaker
                 throw new Error(`Tiles exist for '${layer.id}' layer - use '--force' to overwrite.`)
             }
         }
-        fs.emptyDir(layerTileDirectory);
+        await fs.emptyDir(layerTileDirectory);
 
         const page = await browser.newPage();
         page.on('console', msg => console.log(`Layer ${layer.id}:`, msg.text()));
