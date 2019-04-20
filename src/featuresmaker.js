@@ -82,13 +82,6 @@ class LayerFeatures
 
         this._svgWidth = parseFloat(this._xml.attrib.width);
         this._svgHeight = parseFloat(this._xml.attrib.height);;
-        this._svgBBox = [
-            [0, 0],
-            [this._svgWidth, 0],
-            [this._svgWidth, this._svgHeight],
-            [0, this._svgHeight],
-            [0, 0]
-        ];
 
         if (layer.sourceExtent) {
             this._svgExtent = layer.sourceExtent;
@@ -133,10 +126,23 @@ class LayerFeatures
             node = node.parent;
         }
         const path = this._SVGDrawElement.path(pathDescription.toString());
-        const len = path.length();
+
+        let len = 0;
+        try {
+            len = path.length();
+        } catch (e) {
+            return { data: [], hash: '0', valid: true };
+        }
+
         const pts = [];
         for (let i = 0; i <= 1000; ++i) {
-            pts.push(path.pointAt(i*len/1000));
+            const pt = path.pointAt(i*len/1000);
+            if (0 < pt.x && pt.x < this._svgWidth
+             && 0 < pt.y && pt.y < this._svgHeight) {
+                pts.push(pt);
+            } else {
+                return { data: [], hash: '0', valid: false };
+            }
         }
 
         const result = [];
@@ -145,12 +151,13 @@ class LayerFeatures
         }
         return {
             data: result,
-            hash: `${result.length}/${len.toPrecision(5)}`
+            hash: `${result.length}/${len.toPrecision(5)}`,
+            valid: true
         }
     }
 
-    pathToGeoJsonFeature_(points, id)
-    //===============================
+    pathToGeoJsonFeature_(points)
+    //===========================
     {
         const coords = [];
         let geometry = 'Polygon';
@@ -173,7 +180,7 @@ class LayerFeatures
                 type: geometry,
                 coordinates: null
             },
-            id: id
+            properties: {}
         };
         if (geometry === 'LineString') {
             feature.geometry.coordinates = coords;
@@ -183,28 +190,71 @@ class LayerFeatures
         return feature;
     }
 
-    extendGeoJson(geoJson)
-    //====================
+    extendGeoJson(featureJson=null)
+    //=============================
     {
-        const hashMap = new Map();   // hash --> points data
+        const geoJson = {
+            type: "FeatureCollection",
+            features: [],
+            id: this._layer.id
+        };
+
+        const hashMap = new Map();   // hash --> data
+
+        // Get existing features.
+        //
+        // We include those with a matching `svgPathId`
+        // and those with no path id.
+        const featuresMap = new Map();
+        if (featureJson) {
+            for (const feature of featureJson.features) {
+                if (feature.properties && feature.properties.svgPathId) {
+                    featuresMap.set(feature.properties.svgPathId, feature);
+                } else {
+                    if (!feature.properties) {
+                        feature.properties = {};
+                    }
+                    geoJson.features.push(feature);
+                }
+            }
+        }
 
         for (const path of this._xml.findall('.//path')) {
             if (path.parent.tag !== 'clipPath'
              && (!this._layer.svgExcludes || this._layer.svgExcludes.indexOf(path.attrib.id) < 0)) {
                 const points = this.simplifiedPathPoints_(path);
-                if (differentPaths(this._svgBBox, points.data)) {
-                    const newPath = hashMap.has(points.hash)
-                                    ? differentPaths(hashMap.get(points.hash), points.data, this._tolerance)
-                                    : true;
-                    if (newPath) {
-                        const feature = this.pathToGeoJsonFeature_(points.data, path.attrib.id);
-                        geoJson.features.push(feature);
-                        hashMap.set(points.hash, points.data);
-                        console.log('Path', path.attrib.id);
+                if (points.valid) {
+                    if (points.data.length === 0) {
+                        console.warn('No path length:', this._layer.id, path.attrib.id);
+                    } else {
+                        const newPath = hashMap.has(points.hash)
+                                        ? differentPaths(hashMap.get(points.hash), points.data, this._tolerance)
+                                        : true;
+                        if (newPath) {
+                            let feature = null;
+                            const newFeature = this.pathToGeoJsonFeature_(points.data);
+                            if (featuresMap.has(path.attrib.id)) {
+                                feature = featuresMap.get(path.attrib.id);
+                                delete feature.properties.svgPathId;
+                                // Only update geometry if `force` option...
+                                if (!feature.hasOwnProperty('geometry')) {
+                                    feature.geometry = newFeature.geometry;
+                                }
+                            } else {
+                                feature = newFeature;
+                            }
+                            feature.properties.svgPathId = path.attrib.id;
+
+                            geoJson.features.push(feature);
+                            hashMap.set(points.hash, points.data);
+
+                            console.log('Layer:', this._layer.id, ' Path:', path.attrib.id);
+                        }
                     }
                 }
             }
         }
+        return geoJson;
     }
 }
 
@@ -231,26 +281,18 @@ class FeaturesMaker
         for (const layer of this._map.layers) {
             if (layerId === null || layerId === layer.id) {
                 const featureSourceFile = path.join(featuresSourceDir, `${layer.id}.json`);
-                let geoJson = null;
+                let featureJson = null;
                 if (fs.existsSync(featureSourceFile)) {
-                    const featureData = fs.readFileSync(featureSourceFile);
-                    geoJson = JSON.parse(featureData);
-                    if (!geoJson.id) {
-                        geoJson.id = layer.id
-                    } else if (geoJson.id !== layer.id) {
-                        throw new Error(`Layer ${layer.id} has wrong feature ID (${geoJson.id})`);
+                    const featureData = fs.readFileSync(featureSourceFile);  // readFile()
+                    featureJson = JSON.parse(featureData);
+                    if (featureJson.id !== layer.id) {
+                        throw new Error(`Layer ${layer.id} has wrong feature ID (expected ${featureJson.id})`);
                     }
-                } else {
-                    geoJson = {
-                        type: "FeatureCollection",
-                        features: [],
-                        id: layer.id
-                    };
                 }
 
                 const layerFeatures = new LayerFeatures(layer, this._map.size, SVGDrawElement);
+                const geoJson = layerFeatures.extendGeoJson(featureJson);
 
-                layerFeatures.extendGeoJson(geoJson);
 
                 if (!fs.existsSync(featuresOutputDir)) {
                     fs.mkdirSync(featuresOutputDir, {mode: 0o755});
