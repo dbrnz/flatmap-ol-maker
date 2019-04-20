@@ -76,6 +76,7 @@ class LayerFeatures
         const svg = fs.readFileSync(layer.source, 'utf8');
         const flatSvg = svgflatten(svg).pathify().value();
 
+        this._layer = layer;
         this._xml = et.parse(flatSvg).getroot();
         setChildParents(this._xml);
 
@@ -188,7 +189,8 @@ class LayerFeatures
         const hashMap = new Map();   // hash --> points data
 
         for (const path of this._xml.findall('.//path')) {
-            if (path.parent.tag !== 'clipPath') {
+            if (path.parent.tag !== 'clipPath'
+             && (!this._layer.svgExcludes || this._layer.svgExcludes.indexOf(path.attrib.id) < 0)) {
                 const points = this.simplifiedPathPoints_(path);
                 if (differentPaths(this._svgBBox, points.data)) {
                     const newPath = hashMap.has(points.hash)
