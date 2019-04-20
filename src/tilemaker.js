@@ -241,8 +241,8 @@ class TileMaker
         fs.writeFileSync(md5File, md5Hash);
     }
 
-    async makeTiles()
-    //===============
+    async makeTiles(layerId=null)
+    //===========================
     {
         const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-dev-shm-usage']});
 
@@ -251,7 +251,9 @@ class TileMaker
         const layerPromises = [];
 
         for (const layer of this._map.layers) {
-            layerPromises.push(this.tileLayer_(layer, browser));
+            if (layerId === null || layerId === layer.id) {
+                layerPromises.push(this.tileLayer_(layer, browser));
+            }
         }
 
         // Wait for layer tiling complete

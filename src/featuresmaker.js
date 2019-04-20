@@ -210,8 +210,8 @@ class FeaturesMaker
         this._outputDirectory = outputDirectory;
     }
 
-    makeFeatures()
-    //============
+    async makeFeatures(layerId=null)
+    //==============================
     {
         const document = svgdom.document;
         registerWindow(svgdom, svgdom.document);
@@ -221,34 +221,36 @@ class FeaturesMaker
         const featuresOutputDir = path.join(this._outputDirectory, 'features');
 
         for (const layer of this._map.layers) {
-            const featureSourceFile = path.join(featuresSourceDir, `${layer.id}.json`);
-            let geoJson = null;
-            if (fs.existsSync(featureSourceFile)) {
-                const featureData = fs.readFileSync(featureSourceFile);
-                geoJson = JSON.parse(featureData);
-                if (!geoJson.id) {
-                    geoJson.id = layer.id
-                } else if (geoJson.id !== layer.id) {
-                    throw new Error(`Layer ${layer.id} has wrong feature ID (${geoJson.id})`);
+            if (layerId === null || layerId === layer.id) {
+                const featureSourceFile = path.join(featuresSourceDir, `${layer.id}.json`);
+                let geoJson = null;
+                if (fs.existsSync(featureSourceFile)) {
+                    const featureData = fs.readFileSync(featureSourceFile);
+                    geoJson = JSON.parse(featureData);
+                    if (!geoJson.id) {
+                        geoJson.id = layer.id
+                    } else if (geoJson.id !== layer.id) {
+                        throw new Error(`Layer ${layer.id} has wrong feature ID (${geoJson.id})`);
+                    }
+                } else {
+                    geoJson = {
+                        type: "FeatureCollection",
+                        features: [],
+                        id: layer.id
+                    };
                 }
-            } else {
-                geoJson = {
-                    type: "FeatureCollection",
-                    features: [],
-                    id: layer.id
-                };
+
+                const layerFeatures = new LayerFeatures(layer, this._map.size, SVGDrawElement);
+
+                layerFeatures.extendGeoJson(geoJson);
+
+                if (!fs.existsSync(featuresOutputDir)) {
+                    fs.mkdirSync(featuresOutputDir, {mode: 0o755});
+                }
+
+                fs.writeFileSync(path.join(featuresOutputDir, `${layer.id}.json`,
+                                 JSON.stringify(geoJson, null, 2));
             }
-
-            const layerFeatures = new LayerFeatures(layer, this._map.size, SVGDrawElement);
-
-            layerFeatures.extendGeoJson(geoJson);
-
-            if (!fs.existsSync(featuresOutputDir)) {
-                fs.mkdirSync(featuresOutputDir, {mode: 0o755});
-            }
-
-            fs.writeFileSync(path.join(featuresOutputDir, `${layer.id}.json`,
-                             JSON.stringify(geoJson, null, 2));
         }
     }
 }

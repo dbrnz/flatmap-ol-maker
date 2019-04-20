@@ -46,16 +46,16 @@ class MapMaker
 	}
 
 
-    makeFeatures()
-    //============
+    makeFeatures(layer=null)
+    //======================
     {
-        this._featuresMaker.makeFeatures();
+        this._featuresMaker.makeFeatures(layer);
     }
 
-    makeTiles()
-    //=========
+    makeTiles(layer=null)
+    //===================
     {
-        this._tileMaker.makeTiles();
+        this._tileMaker.makeTiles(layer);
     }
 
     writeIndex()
@@ -104,6 +104,11 @@ function main()
         metavar: 'OUTPUT_DIRECTORY',
         help: 'Directory in which to create the tiled map.'
     });
+    argumentParser.addArgument('--layer', {
+        nargs: 1,
+        defaultValue: [null],
+        help: `Only generate tiles and features for this map layer.`
+    });
     const args = argumentParser.parseArgs();
 
     const specDir = args.specification;
@@ -138,9 +143,11 @@ function main()
 	const mapMaker = new MapMaker(map, outputDirectory);
 
 	try {
-        mapMaker.makeTiles();
-        mapMaker.copyFeatures();
-        mapMaker.writeIndex();
+        mapMaker.makeTiles(args.layer[0]);
+        mapMaker.makeFeatures(args.layer[0]);
+        if (args.layer[0] === null) {
+            mapMaker.writeIndex();
+        }
 	} catch (e) {
 		console.error(e.message);
 	}
