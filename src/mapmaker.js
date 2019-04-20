@@ -109,6 +109,12 @@ function main()
         defaultValue: [null],
         help: `Only generate tiles and features for this map layer.`
     });
+    argumentParser.addArgument('--no-tiles', {
+        dest: 'noTiles',
+        defaultValue: false,
+        action: 'storeTrue',
+        help: `Don't generate image tiles.`
+    });
     const args = argumentParser.parseArgs();
 
     const specDir = args.specification;
@@ -143,8 +149,12 @@ function main()
 	const mapMaker = new MapMaker(map, outputDirectory);
 
 	try {
-        mapMaker.makeTiles(args.layer[0]);
+        if (!args.noTiles) {
+            mapMaker.makeTiles(args.layer[0]);
+        }
+
         mapMaker.makeFeatures(args.layer[0]);
+
         if (args.layer[0] === null) {
             mapMaker.writeIndex();
         }
