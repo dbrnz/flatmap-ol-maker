@@ -81,7 +81,8 @@
             "resolution": 8,
             "origin": [3600, 13500],
             "zoom": [5, 7],
-            "transparent": "white"
+            "transparent": "white",
+            "svgExcludes": ["path872"]
         }
     ]
 }
