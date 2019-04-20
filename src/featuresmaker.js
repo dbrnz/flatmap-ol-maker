@@ -23,7 +23,8 @@ limitations under the License.
 //==============================================================================
 
 const crypto = require('crypto');
-const fs = require('fs');
+const fs = require('fs-extra');
+const path = require('path');
 
 const et = require('elementtree');
 
@@ -262,10 +263,11 @@ class LayerFeatures
 
 class FeaturesMaker
 {
-    constructor(map, outputDirectory)
+    constructor(map, outputDirectory, args)
     {
         this._map = map;
         this._outputDirectory = outputDirectory;
+        this._args = args;
     }
 
     async makeFeatures(layerId=null)
@@ -278,8 +280,19 @@ class FeaturesMaker
         const featuresSourceDir = path.resolve(this._map.inputDirectory, 'features');
         const featuresOutputDir = path.join(this._outputDirectory, 'features');
 
+        if (this._args.force || !fs.existsSync(featuresOutputDir)) {
+            await fs.emptyDir(featuresOutputDir);
+        }
+
         for (const layer of this._map.layers) {
+            const layerFeaturesFile = path.join(featuresOutputDir, `${layer.id}.json`);
+            if (fs.existsSync(layerFeaturesFile) && !this._args.force) {
+                throw new Error(`Features file '${layerFeaturesFile}'' already exists - use '--force' to overwrite`);
+            }
+
             if (layerId === null || layerId === layer.id) {
+                // Only make features if SVG and/or layer and/or map has changed
+                // Or --force option
                 const featureSourceFile = path.join(featuresSourceDir, `${layer.id}.json`);
                 let featureJson = null;
                 if (fs.existsSync(featureSourceFile)) {
@@ -293,13 +306,7 @@ class FeaturesMaker
                 const layerFeatures = new LayerFeatures(layer, this._map.size, SVGDrawElement);
                 const geoJson = layerFeatures.extendGeoJson(featureJson);
 
-
-                if (!fs.existsSync(featuresOutputDir)) {
-                    fs.mkdirSync(featuresOutputDir, {mode: 0o755});
-                }
-
-                fs.writeFileSync(path.join(featuresOutputDir, `${layer.id}.json`,
-                                 JSON.stringify(geoJson, null, 2));
+                fs.writeFileSync(layerFeaturesFile, JSON.stringify(geoJson, null, 2));  // writeFile()
             }
         }
     }

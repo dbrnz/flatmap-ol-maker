@@ -36,13 +36,13 @@ const featuresmaker = require('./featuresmaker');
 
 class MapMaker
 {
-	constructor(map, outputDirectory)
+	constructor(map, outputDirectory, args)
 	{
         this._map = map;
         this._outputDirectory = outputDirectory;
 
-        this._tileMaker = new tilemaker.TileMaker(map, outputDirectory);
-        this._featuresMaker = new featuresmaker.FeaturesMaker(map, outputDirectory);
+        this._tileMaker = new tilemaker.TileMaker(map, outputDirectory, args);
+        this._featuresMaker = new featuresmaker.FeaturesMaker(map, outputDirectory, args);
 	}
 
 
@@ -104,6 +104,11 @@ function main()
         metavar: 'OUTPUT_DIRECTORY',
         help: 'Directory in which to create the tiled map.'
     });
+    argumentParser.addArgument('--force', {
+        defaultValue: false,
+        action: 'storeTrue',
+        help: `Overwrite existing features and tiles.`
+    });
     argumentParser.addArgument('--layer', {
         nargs: 1,
         defaultValue: [null],
@@ -146,7 +151,7 @@ function main()
         layer.source = sourceFile;
 	}
 
-	const mapMaker = new MapMaker(map, outputDirectory);
+	const mapMaker = new MapMaker(map, outputDirectory, args);
 
 	try {
         if (!args.noTiles) {

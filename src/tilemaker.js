@@ -129,7 +129,7 @@ function transparent(image)
 
 class TileMaker
 {
-	constructor(map, outputDirectory)
+	constructor(map, outputDirectory, args)
 	{
         this._map = map;
 		this._tileDims = [Math.ceil(this._map.size[0]/TILE_PIXEL_SIZE[0]),
@@ -140,10 +140,11 @@ class TileMaker
         this._fullZoom = Math.ceil(Math.log2(maxTileDim));
         this._outputDirectory = outputDirectory;
 		this._tileDirectory = path.join(outputDirectory, 'tiles');
+        this._args = args;
 	}
 
-    async tileZoomLevel_(layer, zoomLevel, svgBuffer, svgExtent, imageSize, page)
-    //===========================================================================
+    async tileZoomLevel_(layer, layerTileDirectory, zoomLevel, svgBuffer, svgExtent, imageSize, page)
+    //===============================================================================================
     {
         const zoomScale = 2**(this._fullZoom - zoomLevel);
         const zoomedSize = [imageSize[0]/zoomScale, imageSize[1]/zoomScale];
@@ -168,7 +169,7 @@ class TileMaker
              xOffset < zoomedSize[0];
              x +=1, xOffset += TILE_PIXEL_SIZE[0]) {
 
-            const tileDirectory = path.join(this._tileDirectory, layer.id, `${zoomLevel}`, `${x}`);
+            const tileDirectory = path.join(layerTileDirectory, `${zoomLevel}`, `${x}`);
             let dirExists = fs.existsSync(tileDirectory);
 
             for (let y = yTileStart, yOffset = yStart;
@@ -211,19 +212,25 @@ class TileMaker
 
         // Only generate tiles if SVG and/or map and/or layer attributes have changed
 
-        let md5Hash = crypto.createHash('md5')
-                           .update(layer.id)
-                           .update(svgBuffer)
-                           .update(JSON.stringify(this._map.size))
-                           .update(JSON.stringify(layer.sourceExtent || []))
-                           .update(JSON.stringify(layer.resolution || 1))
-                           .update(JSON.stringify(layer.transparent || null))
-                           .update(JSON.stringify(zoomRange))
-                           .digest("hex");
-        const md5File = path.join(this._tileDirectory, layer.id, 'layer.md5');
-        if (fs.existsSync(md5File) && fs.readFileSync(md5File, 'utf-8') === md5Hash) {
-            return;
+        const layerTileDirectory = path.join(this._tileDirectory, layer.id);
+        const md5Hash = crypto.createHash('md5')
+                              .update(layer.id)
+                              .update(svgBuffer)
+                              .update(JSON.stringify(this._map.size))
+                              .update(JSON.stringify(layer.sourceExtent || []))
+                              .update(JSON.stringify(layer.resolution || 1))
+                              .update(JSON.stringify(layer.transparent || null))
+                              .update(JSON.stringify(zoomRange))
+                              .digest("hex");
+        const md5File = path.join(layerTileDirectory, 'layer.md5');
+        if (fs.existsSync(md5File)) {
+            if (fs.readFileSync(md5File, 'utf-8') === md5Hash) {
+                return;
+            } else if (!this._args.force) {
+                throw new Error(`Tiles exist for '${layer.id}' layer - use '--force' to overwrite.`)
+            }
         }
+        fs.emptyDir(layerTileDirectory);
 
         const page = await browser.newPage();
         page.on('console', msg => console.log(`Layer ${layer.id}:`, msg.text()));
@@ -232,7 +239,7 @@ class TileMaker
 
         const zoomPromises = [];
         for (let z = zoomRange[0]; z <= zoomRange[1]; z += 1) {
-            zoomPromises.push(this.tileZoomLevel_(layer, z, svgBuffer, svgExtent, imageSize, page));
+            zoomPromises.push(this.tileZoomLevel_(layer, layerTileDirectory, z, svgBuffer, svgExtent, imageSize, page));
         }
         await Promise.all(zoomPromises);
 
