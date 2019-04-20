@@ -237,8 +237,8 @@ class LayerFeatures
                             if (featuresMap.has(path.attrib.id)) {
                                 feature = featuresMap.get(path.attrib.id);
                                 delete feature.properties.svgPathId;
-                                // Only update geometry if `force` option...
-                                if (!feature.hasOwnProperty('geometry')) {
+                                // Update geometry if `force` option...
+                                if (!feature.hasOwnProperty('geometry') || this._layer._args.force) {
                                     feature.geometry = newFeature.geometry;
                                 }
                             } else {
