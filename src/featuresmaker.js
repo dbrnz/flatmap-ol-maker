@@ -102,6 +102,12 @@ class LayerFeatures
             this._mapSize = mapSize;
         }
 
+        if (layer.origin) {
+            this._layerOrigin = layer.origin;
+        } else {
+            this._layerOrigin = [0, 0];
+        }
+
         this._tolerance = 0.3;   // A function of svg size??
 
         this._SVGDrawElement = SVGDrawElement
@@ -110,8 +116,8 @@ class LayerFeatures
     pointToMap_(pt)
     //=============
     {
-        return [round(this._mapSize[0]*(pt[0] - this._svgExtent[0])/this._svgExtent[2]),
-                round(this._mapSize[1]*(this._svgHeight - this._svgExtent[1] - pt[1])/this._svgExtent[3])];
+        return [round(this._mapSize[0]*(pt[0] - this._svgExtent[0])/this._svgExtent[2] + this._layerOrigin[0]),
+                round(this._mapSize[1]*(this._svgHeight - this._svgExtent[1] - pt[1])/this._svgExtent[3] + this._layerOrigin[1])];
     }
 
     simplifiedPathPoints_(pathNode)
