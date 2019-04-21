@@ -46,16 +46,16 @@ class MapMaker
     }
 
 
-    makeFeatures(layer=null)
-    //======================
+    async makeFeatures(layer=null)
+    //============================
     {
-        this._featuresMaker.makeFeatures(layer);
+        await this._featuresMaker.makeFeatures(layer);
     }
 
-    makeTiles(layer=null)
-    //===================
+    async makeTiles(layer=null)
+    //=========================
     {
-        this._tileMaker.makeTiles(layer);
+        await this._tileMaker.makeTiles(layer);
     }
 
     writeIndex()
@@ -90,7 +90,7 @@ class MapMaker
 
 //==============================================================================
 
-function main()
+async function main()
 {
     const argumentParser = new ArgumentParser({
           description: 'Create tiled flatmaps', version: '0.4.1'
@@ -155,10 +155,10 @@ function main()
 
     try {
         if (!args.noTiles) {
-            mapMaker.makeTiles(args.layer[0]);
+            await mapMaker.makeTiles(args.layer[0]);
         }
 
-        mapMaker.makeFeatures(args.layer[0]);
+        await mapMaker.makeFeatures(args.layer[0]);
 
         if (args.layer[0] === null) {
             mapMaker.writeIndex();

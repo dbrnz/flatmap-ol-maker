@@ -265,7 +265,7 @@ class TileMaker
 
         // Wait for layer tiling complete
 
-        await Promise.all(layerPromises);
+        await Promise.all(layerPromises).catch(e => console.log(e.message));
 
         // Then close the browser
 
