@@ -21,9 +21,14 @@
   "devDependencies": {
     "@babel/core": "^7.4.3",
     "@babel/preset-env": "^7.4.3",
+    "@svgdotjs/svg.js": "^3.0.12",
     "argparse": "^1.0.10",
     "babel-jest": "^24.6.0",
+    "elementtree": "^0.1.7",
     "eslint": "^5.15.3",
-    "jest": "^24.6.0"
+    "jest": "^24.6.0",
+    "simplify": "^1.0.0",
+    "svg-flatten": "^1.0.0",
+    "svgdom": "0.0.18"
   }
 }
