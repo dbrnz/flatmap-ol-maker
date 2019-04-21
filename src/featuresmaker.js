@@ -287,7 +287,7 @@ class FeaturesMaker
         for (const layer of this._map.layers) {
             const layerFeaturesFile = path.join(featuresOutputDir, `${layer.id}.json`);
             if (fs.existsSync(layerFeaturesFile) && !this._args.force) {
-                throw new Error(`Features file '${layerFeaturesFile}'' already exists - use '--force' to overwrite`);
+                throw new Error(`Features file '${layerFeaturesFile}' already exists - use '--force' to overwrite`);
             }
 
             if (layerId === null || layerId === layer.id) {
