@@ -213,9 +213,6 @@ class SvgExtract(object):
         self._ppt = Presentation(ppt_file)
         self._slides = self._ppt.slides
         self._slide_size = [self._ppt.slide_width, self._ppt.slide_height]
-        xml = open('head.xml', 'w')
-        xml.write(self._ppt.element.xml)
-        xml.close()
 
     def slide_to_svg(self, slide_number):
         svg_maker = SvgMaker(self._slides[slide_number-1], slide_number, self._slide_size)
