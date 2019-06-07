@@ -224,7 +224,18 @@ class SvgExtract(object):
 #===============================================================================
 
 if __name__ == '__main__':
-    svg_extract = SvgExtract('head.pptx')
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Convert Powerpoint slides to map layers')
+    parser.add_argument('--version', action='version', version='0.1.1')
+    parser.add_argument('--output', required=True, metavar='DIRECTORY',
+                        help='Directory in which to create the map')
+    parser.add_argument('powerpoint', metavar='POWERPOINT_FILE',
+                        help='The name of a Powerpoint file')
+
+    args = parser.parse_args()
+
+    svg_extract = SvgExtract(args.powerpoint)
 
     svg_extract.slide_to_svg(1)
 
