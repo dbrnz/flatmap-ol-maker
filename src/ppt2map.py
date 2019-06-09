@@ -23,11 +23,17 @@ from math import sin, cos, pi as PI
 from pptx import Presentation
 from pptx.enum.shapes import MSO_SHAPE
 from pptx.enum.shapes import MSO_SHAPE_TYPE
+from pptx.spec import autoshape_types
+
 import pptx.shapes.connector
 
 import svgwrite
 
 import numpy as np
+
+#===============================================================================
+
+from drawml.formula import Geometry
 
 #===============================================================================
 
@@ -77,16 +83,16 @@ def svg_units(emu):
 #===============================================================================
 
 class Transform(object):
-    def __init__(self, shape, bbox=None):
+    def __init__(self, shape):
         xfrm = shape.element.xfrm
 
         # From Section L.4.7.6 of ECMA-376 Part 1
         (Bx, By) = (svg_coords(xfrm.chOff.x, xfrm.chOff.y)
                         if xfrm.chOff is not None else
-                    (0, 0))     ## Or (left, top) ??
+                    (0, 0))
         (Dx, Dy) = (svg_coords(xfrm.chExt.cx, xfrm.chExt.cy)
                         if xfrm.chExt is not None else
-                    svg_coords(*bbox)) #svg_coords(shape.width,shape.height))
+                    svg_coords(shape.width, shape.height))
         (Bx_, By_) = svg_coords(xfrm.off.x, xfrm.off.y)
         (Dx_, Dy_) = svg_coords(xfrm.ext.cx, xfrm.ext.cy)
 
@@ -128,6 +134,7 @@ class SvgMaker(object):
         self._dwg.defs.add(self._dwg.style('.non-scaling-stroke { vector-effect: non-scaling-stroke; }'))
         self.svg_from_shapes(slide.shapes, self._dwg)
         self._dwg.save()
+        ## Debugging...
         xml = open('slide{:02d}.xml'.format(slide_number), 'w')
         xml.write(slide.element.xml)
         xml.close()
@@ -135,33 +142,32 @@ class SvgMaker(object):
     def svg_from_shapes(self, shapes, svg_parent):
         for shape in shapes:
             if shape.shape_type == MSO_SHAPE_TYPE.AUTO_SHAPE:
-                self.auto_shape_svg(shape, svg_parent)
+                self.shape_to_svg(shape, svg_parent)
+
             elif shape.shape_type == MSO_SHAPE_TYPE.FREEFORM:
-                self.freeform_svg(shape, svg_parent)
+                self.shape_to_svg(shape, svg_parent)
+
             elif isinstance(shape, pptx.shapes.connector.Connector):
-                self.connector_svg(shape, svg_parent)
+                self.connector_svg(Geometry(shape), svg_parent)
+
             elif shape.shape_type == MSO_SHAPE_TYPE.GROUP:
                 svg_group = self._dwg.g()
                 transform = Transform(shape)
                 svg_group.matrix(*transform.svg_matrix())
                 svg_parent.add(svg_group)
                 self.svg_from_shapes(shape.shapes, svg_group)
+
             elif shape.shape_type == MSO_SHAPE_TYPE.TEXT_BOX:
                 pass  # or recognise name of '#layer-id' and get layer name...
+
             else:
                 print('"{}" {} not processed...'.format(shape.name, str(shape.shape_type)))
 
-    def auto_shape_svg(self, shape, svg_parent):
-        print('auto_shape', shape.name, shape.auto_shape_type)
-        pass
-
-    def freeform_svg(self, shape, svg_parent):
-        for path in shape.element.spPr.custGeom.pathLst:
-            bbox = (path.w, path.h)
-            transform = Transform(shape, bbox)
-            svg_path = self._dwg.path(stroke='green', stroke_width=2,
-                                      fill='none',
-                                      class_='non-scaling-stroke') # id='sss'
+    def shape_to_svg(self, shape, svg_parent):
+        geometry = Geometry(shape)
+        transform = Transform(shape)
+        for path in geometry.path_list:
+            svg_path = self._dwg.path(fill='none', stroke_width=3, class_='non-scaling-stroke') # id='sss'
             svg_path.matrix(*transform.svg_matrix())
             first_point = None
             current_point = None
@@ -172,34 +178,42 @@ class SvgMaker(object):
                 elif c.tag == DML('close'):
                     if first_point is not None and first_point == current_point:
                         closed = True
-                        svg_path.push('Z')
+                    svg_path.push('Z')
                     first_point = None
                 elif c.tag == DML('cubicBezTo'):
                     coords = []
                     for p in c.getchildren():
-                        coords.append(svg_units(p.x))
-                        coords.append(svg_units(p.y))
-                        current_point = (p.x, p.y)
+                        pt = geometry.point(p)
+                        coords.append(svg_units(pt[0]))
+                        coords.append(svg_units(pt[1]))
+                        current_point = pt
                     svg_path.push('C', *coords)
                 elif c.tag == DML('lnTo'):
-                    svg_path.push('L', svg_units(c.pt.x), svg_units(c.pt.y))
-                    current_point = (c.pt.x, c.pt.y)
+                    pt = geometry.point(c.pt)
+                    svg_path.push('L', svg_units(pt[0]), svg_units(pt[1]))
+                    current_point = pt
                 elif c.tag == DML('moveTo'):
-                    svg_path.push('M', svg_units(c.pt.x), svg_units(c.pt.y))
+                    pt = geometry.point(c.pt)
+                    svg_path.push('M', svg_units(pt[0]), svg_units(pt[1]))
                     if first_point is None:
-                        first_point = (c.pt.x, c.pt.y)
+                        first_point = pt
                 elif c.tag == DML('quadBezTo'):
                     coords = []
                     for p in c.getchildren():
-                        coords.append(svg_units(p.x))
-                        coords.append(svg_units(p.y))
-                        current_point = (p.x, p.y)
+                        pt = geometry.point(p)
+                        coords.append(svg_units(pt[0]))
+                        coords.append(svg_units(pt[1]))
+                        current_point = pt
                     svg_path.push('Q', *coords)
                 else:
                     print('Unknown path element: {}'.format(c.tag))
             if closed:
-                 svg_path.attribs['fill'] = '#808080'
-                 svg_path.attribs['opacity'] = 0.3
+                svg_path.attribs['fill'] = '#808080'
+                svg_path.attribs['opacity'] = 0.3
+                svg_path.attribs['stroke'] = 'red'
+            else:
+                svg_path.attribs['stroke'] = 'blue'
+
             svg_parent.add(svg_path)
 
     def connector_svg(self, shape, svg_parent):
@@ -232,6 +246,8 @@ if __name__ == '__main__':
                         help='Directory in which to create the map')
     parser.add_argument('powerpoint', metavar='POWERPOINT_FILE',
                         help='The name of a Powerpoint file')
+
+    # --slides
 
     args = parser.parse_args()
 
