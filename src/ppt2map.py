@@ -19,6 +19,7 @@
 #===============================================================================
 
 from math import sqrt, sin, cos, pi as PI
+import os
 
 from pptx import Presentation
 from pptx.enum.shapes import MSO_SHAPE
@@ -115,8 +116,12 @@ class Transform(object):
 #===============================================================================
 
 class SvgMaker(object):
-    def __init__(self, slide, slide_number, slide_size):
-        self._dwg = svgwrite.Drawing(filename='slide{:02d}.svg'.format(slide_number),
+    def __init__(self, slide, slide_number, slide_size, args):
+        if args.debug_xml:
+            xml = open(os.path.join(args.output_dir, 'slide{:02d}.xml'.format(slide_number)), 'w')
+            xml.write(slide.element.xml)
+            xml.close()
+        self._dwg = svgwrite.Drawing(filename=os.path.join(args.output_dir, 'slide{:02d}.svg'.format(slide_number)),
                                      size=svg_coords(slide_size[0], slide_size[1]))
         self._dwg.defs.add(self._dwg.style('.non-scaling-stroke { vector-effect: non-scaling-stroke; }'))
         self.svg_from_shapes(slide.shapes, self._dwg)
@@ -213,13 +218,14 @@ class SvgMaker(object):
 #===============================================================================
 
 class SvgExtract(object):
-    def __init__(self, ppt_file):
-        self._ppt = Presentation(ppt_file)
+    def __init__(self, args):
+        self._args = args
+        self._ppt = Presentation(args.powerpoint)
         self._slides = self._ppt.slides
         self._slide_size = [self._ppt.slide_width, self._ppt.slide_height]
 
     def slide_to_svg(self, slide_number):
-        svg_maker = SvgMaker(self._slides[slide_number-1], slide_number, self._slide_size)
+        svg_maker = SvgMaker(self._slides[slide_number-1], slide_number, self._slide_size, self._args)
 
     def slides_to_svg(self):
         for n in range(len(slides)):
@@ -230,20 +236,28 @@ class SvgExtract(object):
 if __name__ == '__main__':
     import argparse
 
-    parser = argparse.ArgumentParser(description='Convert Powerpoint slides to map layers')
-    parser.add_argument('--version', action='version', version='0.1.1')
-    parser.add_argument('--output', required=True, metavar='DIRECTORY',
-                        help='Directory in which to create the map')
+    parser = argparse.ArgumentParser(description='Extract geometries from Powerpoint slides.')
+    parser.add_argument('--version', action='version', version='0.2.1')
+    parser.add_argument('--debug-xml', action='store_true',
+                        help="save a slide's DrawML for debugging")
+    parser.add_argument('--slide', type=int, metavar='N',
+                        help='only process this slide number (1-origin)')
+    parser.add_argument('output_dir', metavar='OUTPUT_DIRECTORY',
+                        help='directory in which to save geometries')
     parser.add_argument('powerpoint', metavar='POWERPOINT_FILE',
-                        help='The name of a Powerpoint file')
+                        help='the name of a Powerpoint file')
 
-    # --slides
 
     args = parser.parse_args()
 
-    svg_extract = SvgExtract(args.powerpoint)
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
 
-    svg_extract.slide_to_svg(1)
+    svg_extract = SvgExtract(args)
+    if args.slide is None:
+        svg_extract.slides_to_svg()
+    else:
+        svg_extract.slide_to_svg(args.slide)
 
 #===============================================================================
 
