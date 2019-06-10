@@ -107,8 +107,8 @@ class Transform(object):
         Fx = -1 if xfrm.flipH else 1
         Fy = -1 if xfrm.flipV else 1
 
-        T_st = np.matrix([[Dx_/Dx,      0, Bx_ - (Dx_/Dx)*Bx],
-                          [     0, Dy_/Dy, By_ - (Dy_/Dy)*By],
+        T_st = np.matrix([[Dx_/Dx,      0, Bx_ - (Dx_/Dx)*Bx] if Dx != 0 else [1, 0, Bx_],
+                          [     0, Dy_/Dy, By_ - (Dy_/Dy)*By] if Dy != 0 else [0, 1, By_],
                           [     0,      0,                 1]])
         U = np.matrix([[1, 0, -(Bx_ + Dx_/2.0)],
                        [0, 1, -(By_ + Dy_/2.0)],
