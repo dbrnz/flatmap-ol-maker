@@ -131,7 +131,7 @@ class Evaluator(object):
     @staticmethod
     def evaluate(expr, context):
         args = expr.split()
-        return Evaluator.formulae[args[0]](context.value, *args[1:])
+        return Evaluator.formulae[args[0]](context.evaluate, *args[1:])
 
 #===============================================================================
 
@@ -179,17 +179,17 @@ class Geometry(object):
     def xfrm(self):
         return self._xfrm
 
-    def value(self, x):
+    def evaluate(self, x):
         try: return float(x)
         except ValueError: pass
-        try: return self.value(PRESET_VARIABLES[x])
+        try: return self.evaluate(PRESET_VARIABLES[x])
         except KeyError: pass
-        try: return self.value(self._variables[x])
+        try: return self.evaluate(self._variables[x])
         except KeyError: pass
         return Evaluator.evaluate(x, self)
 
     def point(self, pt):
-        return (self.value(pt.attrib['x']), self.value(pt.attrib['y']))
+        return (self.evaluate(pt.attrib['x']), self.evaluate(pt.attrib['y']))
 
 #===============================================================================
 
