@@ -24,6 +24,7 @@
 
 import math
 
+import pptx.shapes.connector
 from pptx.enum.shapes import MSO_SHAPE_TYPE
 
 #===============================================================================
@@ -143,6 +144,12 @@ class Geometry(object):
 
         elif shape.shape_type == MSO_SHAPE_TYPE.FREEFORM:
             self._geometry = shape.element.spPr.custGeom
+
+        elif isinstance(shape, pptx.shapes.connector.Connector):
+            self._geometry = Shapes.lookup(shape.element.spPr.prstGeom.attrib['prst'])
+
+        else:
+            print('Unknown geometry for', shape.shape_type)
 
         self._variables = {
             'w': shape.width,

@@ -141,14 +141,10 @@ class SvgMaker(object):
 
     def svg_from_shapes(self, shapes, svg_parent):
         for shape in shapes:
-            if shape.shape_type == MSO_SHAPE_TYPE.AUTO_SHAPE:
+            if (shape.shape_type == MSO_SHAPE_TYPE.AUTO_SHAPE
+             or shape.shape_type == MSO_SHAPE_TYPE.FREEFORM
+             or isinstance(shape, pptx.shapes.connector.Connector)):
                 self.shape_to_svg(shape, svg_parent)
-
-            elif shape.shape_type == MSO_SHAPE_TYPE.FREEFORM:
-                self.shape_to_svg(shape, svg_parent)
-
-            elif isinstance(shape, pptx.shapes.connector.Connector):
-                self.connector_svg(Geometry(shape), svg_parent)
 
             elif shape.shape_type == MSO_SHAPE_TYPE.GROUP:
                 svg_group = self._dwg.g()
@@ -215,10 +211,6 @@ class SvgMaker(object):
                 svg_path.attribs['stroke'] = 'blue'
 
             svg_parent.add(svg_path)
-
-    def connector_svg(self, shape, svg_parent):
-        print('connection', shape.name) #, dir(b))
-        pass
 
 #===============================================================================
 
