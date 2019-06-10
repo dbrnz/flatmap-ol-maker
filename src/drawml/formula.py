@@ -215,6 +215,8 @@ variables = {
     'h': 30,  # The variable height of the shape defined in the shape properties. This value is received from the shape transform listed within the <spPr> element.
 }
 
+    def attrib_value(self, element, attrib):
+        return self.evaluate(element.attrib[attrib])
 
 #===============================================================================
 

@@ -18,7 +18,7 @@
 #
 #===============================================================================
 
-from math import sin, cos, pi as PI
+from math import sqrt, sin, cos, pi as PI
 
 from pptx import Presentation
 from pptx.enum.shapes import MSO_SHAPE
@@ -33,7 +33,7 @@ import numpy as np
 
 #===============================================================================
 
-from drawml.formula import Geometry
+from drawml.formula import Geometry, radians
 
 #===============================================================================
 
@@ -79,6 +79,13 @@ def svg_coords(x, y):
 def svg_units(emu):
 #===================
     return emu/EMU_PER_DOT
+
+def ellipse_point(a, b, theta):
+#==============================
+    a_sin_theta = a*sin(theta)
+    b_cos_theta = b*cos(theta)
+    circle_radius = sqrt(a_sin_theta**2 + b_cos_theta**2)
+    return (a*b_cos_theta/circle_radius, b*a_sin_theta/circle_radius)
 
 #===============================================================================
 
@@ -170,7 +177,20 @@ class SvgMaker(object):
             closed = False
             for c in path.getchildren():
                 if   c.tag == DML('arcTo'):
-                    print('arcTo is not yet supported...')
+                    wR = geometry.attrib_value(c, 'wR')
+                    hR = geometry.attrib_value(c, 'hR')
+                    stAng = radians(geometry.attrib_value(c, 'stAng'))
+                    swAng = radians(geometry.attrib_value(c, 'swAng'))
+                    p1 = ellipse_point(wR, hR, stAng)
+                    p2 = ellipse_point(wR, hR, stAng + swAng)
+                    pt = (current_point[0] - p1[0] + p2[0],
+                          current_point[1] - p1[1] + p2[1])
+                    large_arc_flag = 1 if swAng >= PI else 0
+                    svg_path.push('A', svg_units(wR), svg_units(hR),
+                                       0, large_arc_flag, 1,
+                                       svg_units(pt[0]), svg_units(pt[1]))
+                    current_point = pt
+
                 elif c.tag == DML('close'):
                     if first_point is not None and first_point == current_point:
                         closed = True
@@ -193,6 +213,7 @@ class SvgMaker(object):
                     svg_path.push('M', svg_units(pt[0]), svg_units(pt[1]))
                     if first_point is None:
                         first_point = pt
+                    current_point = pt
                 elif c.tag == DML('quadBezTo'):
                     coords = []
                     for p in c.getchildren():
