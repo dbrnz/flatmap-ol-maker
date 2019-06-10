@@ -141,12 +141,15 @@ class Geometry(object):
 
         if shape.shape_type == MSO_SHAPE_TYPE.AUTO_SHAPE:
             self._geometry = Shapes.lookup(shape.element.prstGeom.attrib['prst'])
+            adjustments = shape.element.prstGeom.avLst
 
         elif shape.shape_type == MSO_SHAPE_TYPE.FREEFORM:
             self._geometry = shape.element.spPr.custGeom
+            adjustments = None
 
         elif isinstance(shape, pptx.shapes.connector.Connector):
             self._geometry = Shapes.lookup(shape.element.spPr.prstGeom.attrib['prst'])
+            adjustments = None
 
         else:
             print('Unknown geometry for', shape.shape_type)
@@ -156,11 +159,16 @@ class Geometry(object):
             'h': shape.height
         }
 
-        for gd in self._geometry.gdLst:
-            self._variables[gd.name] = gd.fmla
+        if self._geometry.gdLst is not None:
+            for gd in self._geometry.gdLst:
+                self._variables[gd.name] = gd.fmla
 
         if self._geometry.avLst is not None:
             for gd in self._geometry.avLst:
+                self._variables[gd.name] = gd.fmla
+
+        if adjustments is not None:
+            for gd in adjustments:
                 self._variables[gd.name] = gd.fmla
 
     @property
