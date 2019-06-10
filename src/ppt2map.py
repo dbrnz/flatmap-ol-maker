@@ -42,23 +42,6 @@ def DML(tag):
 
 #===============================================================================
 
-'''
-For generating GeoJSON...
-
-https://simoncozens.github.io/beziers.py/index.html
-
-b1 = CubicBezier(Point(0, 22361),
-            Point(66977, -8289),
-            Point(204903, -1762),
-            Point(296286, 8739))
-b2 = CubicBezier(Point(296286, 8739),
-            Point(387669, 19240),
-            Point(566463, 131908),
-            Point(538083, 126232))
-'''
-
-#===============================================================================
-
 # Internal PPT units are EMUs (English Metric Units)
 
 EMU_PER_CM  = 360000
@@ -138,10 +121,6 @@ class SvgMaker(object):
         self._dwg.defs.add(self._dwg.style('.non-scaling-stroke { vector-effect: non-scaling-stroke; }'))
         self.svg_from_shapes(slide.shapes, self._dwg)
         self._dwg.save()
-        ## Debugging...
-        xml = open('slide{:02d}.xml'.format(slide_number), 'w')
-        xml.write(slide.element.xml)
-        xml.close()
 
     def svg_from_shapes(self, shapes, svg_parent):
         for shape in shapes:
