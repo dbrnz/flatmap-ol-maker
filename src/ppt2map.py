@@ -73,7 +73,7 @@ def ellipse_point(a, b, theta):
 #===============================================================================
 
 class Transform(object):
-    def __init__(self, shape):
+    def __init__(self, shape, bbox=None):
         xfrm = shape.element.xfrm
 
         # From Section L.4.7.6 of ECMA-376 Part 1
@@ -82,7 +82,7 @@ class Transform(object):
                     (0, 0))
         (Dx, Dy) = (svg_coords(xfrm.chExt.cx, xfrm.chExt.cy)
                         if xfrm.chExt is not None else
-                    svg_coords(shape.width, shape.height))
+                    svg_coords(*bbox))
         (Bx_, By_) = svg_coords(xfrm.off.x, xfrm.off.y)
         (Dx_, Dy_) = svg_coords(xfrm.ext.cx, xfrm.ext.cy)
 
@@ -144,8 +144,9 @@ class SvgMaker(object):
 
     def shape_to_svg(self, shape, svg_parent):
         geometry = Geometry(shape)
-        transform = Transform(shape)
         for path in geometry.path_list:
+            bbox = (shape.width, shape.height) if path.w is None else (path.w, path.h)
+            transform = Transform(shape, bbox)
             svg_path = self._dwg.path(fill='none', stroke_width=3, class_='non-scaling-stroke') # id='sss'
             svg_path.matrix(*transform.svg_matrix())
             first_point = None
