@@ -124,13 +124,10 @@ class Transform(object):
 
         self._T = T_rf*T_st
 
-
     def svg_matrix(self):
         return (self._T[0, 0], self._T[1, 0],
                 self._T[0, 1], self._T[1, 1],
                 self._T[0, 2], self._T[1, 2])
-
-## chOff and chExt represent child offset and child extents, respectively. These are used if the group itself is transformed, in particular when it is scaled.
 
 #===============================================================================
 

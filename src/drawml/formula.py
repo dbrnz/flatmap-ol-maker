@@ -191,30 +191,6 @@ class Geometry(object):
     def point(self, pt):
         return (self.evaluate(pt.attrib['x']), self.evaluate(pt.attrib['y']))
 
-#===============================================================================
-
-'''
-Guides evaluated in order
-
-class Guide(object):
-    def __init__(self, name, fmla):
-        pass
-
-    def value(self):
-        pass
-
-class GuideList(object):
-    def __init__(self):
-        self._guides = {}
-'''
-
-
-
-variables = {
-    'w': 20,  # The variable width of the shape defined in the shape properties. This value is received from the shape transform listed within the <spPr> element.
-    'h': 30,  # The variable height of the shape defined in the shape properties. This value is received from the shape transform listed within the <spPr> element.
-}
-
     def attrib_value(self, element, attrib):
         return self.evaluate(element.attrib[attrib])
 
