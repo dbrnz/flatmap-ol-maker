@@ -35,6 +35,7 @@ import svgwrite
 from .extractor import GeometryExtractor, Transform
 from .extractor import EMU_PER_DOT, ellipse_point
 from .formula import Geometry, radians
+from .presets import DML
 
 #===============================================================================
 
@@ -51,11 +52,6 @@ def svg_transform(m):
     return (          m[0, 0],            m[1, 0],
                       m[0, 1],            m[1, 1],
             svg_units(m[0, 2]), svg_units(m[1, 2]))
-
-#===============================================================================
-
-def DML(tag):
-    return '{{http://schemas.openxmlformats.org/drawingml/2006/main}}{}'.format(tag)
 
 #===============================================================================
 

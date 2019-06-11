@@ -35,6 +35,11 @@ from pptx.oxml.xmlchemy import (
 
 #===============================================================================
 
+def DML(tag):
+    return '{{http://schemas.openxmlformats.org/drawingml/2006/main}}{}'.format(tag)
+
+#===============================================================================
+
 ns._nsmap['drawml'] = ("http://www.ecma-international.org/flat/publications/standards/Ec"
                        "ma-376/drawingml/")
 
