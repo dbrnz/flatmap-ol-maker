@@ -24,6 +24,7 @@ import os
 
 #===============================================================================
 
+# https://simoncozens.github.io/beziers.py/index.html
 from beziers.cubicbezier import CubicBezier
 from beziers.point import Point as BezierPoint
 from beziers.quadraticbezier import QuadraticBezier
@@ -44,37 +45,20 @@ from .presets import DML
 
 #===============================================================================
 
-WORLD_PER_EMU = 0.001
+WORLD_PER_EMU = 0.01
 
 def transform_point(transform, point):
     pt = transform.dot([point[0], point[1], 1.0])
-    return (pt[0], pt[1])
+    return (pt[0, 0], pt[0, 1])
 
 def point_to_lon_lat(point):
     b = 20037508.34
     lon = point[0]
     lat = point[1]
-    return (lon*180/b, math.atan(math.exp(lat*math.pi/b))*360/math.PI - 90)
+    return (lon*180/b, math.atan(math.exp(lat*math.pi/b))*360/math.pi - 90)
 
 def points_to_lon_lat(points):
     return [ point_to_lon_lat(pt) for pt in points ]
-
-#===============================================================================
-
-'''
-For generating GeoJSON...
-
-https://simoncozens.github.io/beziers.py/index.html
-
-b1 = CubicBezier(Point(0, 22361),
-            Point(66977, -8289),
-            Point(204903, -1762),
-            Point(296286, 8739))
-b2 = CubicBezier(Point(296286, 8739),
-            Point(387669, 19240),
-            Point(566463, 131908),
-            Point(538083, 126232))
-'''
 
 #===============================================================================
 
@@ -83,9 +67,11 @@ class MakeGeoJsonSlide(object):
         self._features = []
         self._layer_id = 'slide{:02d}'.format(slide_number)
         self._path_id = 1
-        transform = np.matrix([[WORLD_PER_EMU,             0, 0],
-                               [            0, WORLD_PER_EMU, 0],
-                               [            0,             0, 1]])
+        transform = np.matrix([[WORLD_PER_EMU,              0, 0],
+                               [            0, -WORLD_PER_EMU, 0],
+                               [            0,              0, 1]])*np.matrix([[1, 0, -slide_size[0]/2.0],
+                                                                               [0, 1, -slide_size[1]/2.0],
+                                                                               [0, 0,                1.0]])
         self.geojson_from_shapes_(slide.shapes, transform)
         with open(os.path.join(args.output_dir, '{}.json'.format(self._layer_id)), 'w') as output_file:
             json.dump({
@@ -102,7 +88,7 @@ class MakeGeoJsonSlide(object):
              or isinstance(shape, pptx.shapes.connector.Connector)):
                 self.shape_to_feature_(shape, transform)
             elif shape.shape_type == MSO_SHAPE_TYPE.GROUP:
-                self.geojson_from_shapes_(shape.shapes, Transform(shape).matrix()*transform)
+                self.geojson_from_shapes_(shape.shapes, transform*Transform(shape).matrix())
             elif shape.shape_type == MSO_SHAPE_TYPE.TEXT_BOX:
                 #print('{}: {}'.format(shape.name, shape.text)) # Recognise name of '#layer-id' and get layer name...
                 pass
@@ -125,7 +111,7 @@ class MakeGeoJsonSlide(object):
         pptx_geometry = Geometry(shape)
         for path in pptx_geometry.path_list:
             bbox = (shape.width, shape.height) if path.w is None else (path.w, path.h)
-            T = Transform(shape, bbox).matrix()*transform
+            T = transform*Transform(shape, bbox).matrix()
 
             moved = False
             first_point = None
@@ -192,12 +178,13 @@ class MakeGeoJsonSlide(object):
                 else:
                     print('Unknown path element: {}'.format(c.tag))
 
+            lat_lon = points_to_lon_lat(coordinates)
             if closed:
                 geometry['type'] = 'Polygon'
-                geometry['coordinates'] = [ points_to_lon_lat(coordinates) ]
+                geometry['coordinates'] = [ lat_lon ]
             else:
                 geometry['type'] = 'LineString'
-                geometry['coordinates'] = points_to_lon_lat(coordinates)
+                geometry['coordinates'] = lat_lon
 
             feature['geometry'] = geometry
             self._features.append(feature)
