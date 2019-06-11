@@ -19,6 +19,7 @@
 #===============================================================================
 
 from math import sqrt, sin, cos, pi as PI
+import os
 
 #===============================================================================
 
@@ -108,6 +109,7 @@ class GeometryExtractor(object):
         self._ppt = Presentation(args.powerpoint)
         self._slides = self._ppt.slides
         self._slide_size = [self._ppt.slide_width, self._ppt.slide_height]
+        self._slide_maker = None
 
     def __len__(self):
         return len(self._slides)
@@ -120,7 +122,13 @@ class GeometryExtractor(object):
         return self._slides[slide_number - 1]
 
     def slide_to_geometry(self, slide_number):
-        pass
+        slide = self.slide(slide_number)
+        if self._args.debug_xml:
+            xml = open(os.path.join(self._args.output_dir, 'slide{:02d}.xml'.format(slide_number)), 'w')
+            xml.write(slide.element.xml)
+            xml.close()
+        if self._slide_maker is not None:
+            self._slide_maker(slide, slide_number, self.slide_size, self._args)
 
     def slides_to_geometry(self, slide_range):
         if slide_range is None:

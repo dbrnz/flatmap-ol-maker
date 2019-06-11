@@ -18,7 +18,7 @@
 #
 #===============================================================================
 
-from drawml import SvgExtractor
+from drawml import GeoJsonExtractor, SvgExtractor
 
 #===============================================================================
 
@@ -38,6 +38,9 @@ if __name__ == '__main__':
                         help='directory in which to save geometries')
     parser.add_argument('powerpoint', metavar='POWERPOINT_FILE',
                         help='the name of a Powerpoint file')
+
+    ## specify range of slides...
+    ## specify format
 
     args = parser.parse_args()
 

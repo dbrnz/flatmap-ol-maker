@@ -43,7 +43,7 @@ def DML(tag):
 
 #===============================================================================
 
-class SlideSvgMaker(object):
+class MakeSvgSlide(object):
     def __init__(self, slide, slide_number, slide_size, args):
         if args.debug_xml:
             xml = open(os.path.join(args.output_dir, 'slide{:02d}.xml'.format(slide_number)), 'w')
@@ -146,7 +146,8 @@ class SlideSvgMaker(object):
 #===============================================================================
 
 class SvgExtractor(GeometryExtractor):
-    def slide_to_geometry(self, slide_number):
-        SlideSvgMaker(self.slide(slide_number), slide_number, self.slide_size, self._args)
+    def __init__(self, args):
+        super().__init__(args)
+        self._slide_maker = MakeSvgSlide
 
 #===============================================================================
