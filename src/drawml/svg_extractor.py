@@ -45,10 +45,6 @@ def DML(tag):
 
 class MakeSvgSlide(object):
     def __init__(self, slide, slide_number, slide_size, args):
-        if args.debug_xml:
-            xml = open(os.path.join(args.output_dir, 'slide{:02d}.xml'.format(slide_number)), 'w')
-            xml.write(slide.element.xml)
-            xml.close()
         self._dwg = svgwrite.Drawing(filename=os.path.join(args.output_dir, 'slide{:02d}.svg'.format(slide_number)),
                                      size=svg_coords(slide_size[0], slide_size[1]))
         self._dwg.defs.add(self._dwg.style('.non-scaling-stroke { vector-effect: non-scaling-stroke; }'))
