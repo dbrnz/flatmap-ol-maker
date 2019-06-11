@@ -66,14 +66,14 @@ class Transform(object):
         xfrm = shape.element.xfrm
 
         # From Section L.4.7.6 of ECMA-376 Part 1
-        (Bx, By) = (svg_coords(xfrm.chOff.x, xfrm.chOff.y)
+        (Bx, By) = ((xfrm.chOff.x, xfrm.chOff.y)
                         if xfrm.chOff is not None else
                     (0, 0))
-        (Dx, Dy) = (svg_coords(xfrm.chExt.cx, xfrm.chExt.cy)
+        (Dx, Dy) = ((xfrm.chExt.cx, xfrm.chExt.cy)
                         if xfrm.chExt is not None else
-                    svg_coords(*bbox))
-        (Bx_, By_) = svg_coords(xfrm.off.x, xfrm.off.y)
-        (Dx_, Dy_) = svg_coords(xfrm.ext.cx, xfrm.ext.cy)
+                    bbox)
+        (Bx_, By_) = (xfrm.off.x, xfrm.off.y)
+        (Dx_, Dy_) = (xfrm.ext.cx, xfrm.ext.cy)
 
         theta = xfrm.rot*PI/180.0
         Fx = -1 if xfrm.flipH else 1
@@ -97,9 +97,9 @@ class Transform(object):
         self._T = T_rf*T_st
 
     def svg_matrix(self):
-        return (self._T[0, 0], self._T[1, 0],
-                self._T[0, 1], self._T[1, 1],
-                self._T[0, 2], self._T[1, 2])
+        return (          self._T[0, 0],            self._T[1, 0],
+                          self._T[0, 1],            self._T[1, 1],
+                svg_units(self._T[0, 2]), svg_units(self._T[1, 2]))
 
 #===============================================================================
 
