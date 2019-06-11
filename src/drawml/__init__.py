@@ -1,1 +1,1 @@
-# Empty file
+from .svg_extractor import SvgExtractor
