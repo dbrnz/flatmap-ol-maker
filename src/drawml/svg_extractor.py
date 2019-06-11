@@ -33,8 +33,24 @@ import svgwrite
 #===============================================================================
 
 from .extractor import GeometryExtractor, Transform
-from .extractor import ellipse_point, svg_coords, svg_units
+from .extractor import EMU_PER_DOT, ellipse_point
 from .formula import Geometry, radians
+
+#===============================================================================
+
+def svg_coords(x, y):
+#====================
+    return (x/EMU_PER_DOT, y/EMU_PER_DOT)
+
+def svg_units(emu):
+#===================
+    return emu/EMU_PER_DOT
+
+def svg_transform(m):
+#====================
+    return (          m[0, 0],            m[1, 0],
+                      m[0, 1],            m[1, 1],
+            svg_units(m[0, 2]), svg_units(m[1, 2]))
 
 #===============================================================================
 
@@ -60,8 +76,7 @@ class MakeSvgSlide(object):
 
             elif shape.shape_type == MSO_SHAPE_TYPE.GROUP:
                 svg_group = self._dwg.g()
-                transform = Transform(shape)
-                svg_group.matrix(*transform.svg_matrix())
+                svg_group.matrix(*svg_transform(Transform(shape).matrix()))
                 svg_parent.add(svg_group)
                 self.svg_from_shapes_(shape.shapes, svg_group)
 
@@ -75,9 +90,8 @@ class MakeSvgSlide(object):
         geometry = Geometry(shape)
         for path in geometry.path_list:
             bbox = (shape.width, shape.height) if path.w is None else (path.w, path.h)
-            transform = Transform(shape, bbox)
             svg_path = self._dwg.path(fill='none', stroke_width=3, class_='non-scaling-stroke') # id='sss'
-            svg_path.matrix(*transform.svg_matrix())
+            svg_path.matrix(*svg_transform(Transform(shape, bbox).matrix()))
             first_point = None
             current_point = None
             closed = False

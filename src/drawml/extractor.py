@@ -44,14 +44,6 @@ def cm_coords(x, y):
 #===================
     return (x/EMU_PER_CM, y/EMU_PER_CM)
 
-def svg_coords(x, y):
-#====================
-    return (x/EMU_PER_DOT, y/EMU_PER_DOT)
-
-def svg_units(emu):
-#===================
-    return emu/EMU_PER_DOT
-
 def ellipse_point(a, b, theta):
 #==============================
     a_sin_theta = a*sin(theta)
@@ -74,18 +66,15 @@ class Transform(object):
                     bbox)
         (Bx_, By_) = (xfrm.off.x, xfrm.off.y)
         (Dx_, Dy_) = (xfrm.ext.cx, xfrm.ext.cy)
-
         theta = xfrm.rot*PI/180.0
         Fx = -1 if xfrm.flipH else 1
         Fy = -1 if xfrm.flipV else 1
-
         T_st = np.matrix([[Dx_/Dx,      0, Bx_ - (Dx_/Dx)*Bx] if Dx != 0 else [1, 0, Bx_],
                           [     0, Dy_/Dy, By_ - (Dy_/Dy)*By] if Dy != 0 else [0, 1, By_],
                           [     0,      0,                 1]])
         U = np.matrix([[1, 0, -(Bx_ + Dx_/2.0)],
                        [0, 1, -(By_ + Dy_/2.0)],
                        [0, 0,                1]])
-
         R = np.matrix([[cos(theta), -sin(theta), 0],
                        [sin(theta),  cos(theta), 0],
                        [0,                    0, 1]])
@@ -93,13 +82,10 @@ class Transform(object):
                           [ 0, Fy, 0],
                           [ 0,  0, 1]])
         T_rf = U.I*R*Flip*U
-
         self._T = T_rf*T_st
 
-    def svg_matrix(self):
-        return (          self._T[0, 0],            self._T[1, 0],
-                          self._T[0, 1],            self._T[1, 1],
-                svg_units(self._T[0, 2]), svg_units(self._T[1, 2]))
+    def matrix(self):
+        return self._T
 
 #===============================================================================
 

@@ -31,7 +31,7 @@ from pptx.spec import autoshape_types
 #===============================================================================
 
 from .extractor import GeometryExtractor, Transform
-from .extractor import ellipse_point, svg_coords, svg_units
+from .extractor import ellipse_point
 
 from .formula import Geometry, radians
 
