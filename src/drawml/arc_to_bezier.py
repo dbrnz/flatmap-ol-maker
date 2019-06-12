@@ -8,9 +8,16 @@
 #
 #===============================================================================
 
-import collections
 import math
 
+#===============================================================================
+
+from beziers.cubicbezier import CubicBezier
+from beziers.point import Point as BezierPoint
+
+#===============================================================================
+
+import collections
 tuple2 = collections.namedtuple('tuple2', 'x y')
 
 #===============================================================================
@@ -88,9 +95,11 @@ def cubic_bezier_points(r, phi, flagA, flagS, p1, p2):
     dt = math.pi/4
     curves = []
     while (t + dt) < lambda2:
-        curves.append(cubic_bezier_control_points(c, r_abs, phi, t, t + dt))
+        control_points = (BezierPoint(*cp) for cp in cubic_bezier_control_points(c, r_abs, phi, t, t + dt))
+        curves.append(CubicBezier(*control_points))
         t += dt
-    curves.append(cubic_bezier_control_points(c, r_abs, phi, t, lambda2))
+    control_points = (BezierPoint(*cp) for cp in cubic_bezier_control_points(c, r_abs, phi, t, lambda2))
+    curves.append(CubicBezier(*(tuple(control_points)[:3]), BezierPoint(*p2)))
     return curves
 
 #===============================================================================
@@ -109,7 +118,7 @@ if __name__ == '__main__':
     cps = cubic_bezier_points(tuple2(rx, ry), phi*math.pi/180, fa, fs, tuple2(x, y), tuple2(x1, y1))
 
     for bz in cps:
-        print(cps)
+        print(bz)
 
 #===============================================================================
 
