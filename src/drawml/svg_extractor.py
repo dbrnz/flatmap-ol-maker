@@ -108,9 +108,9 @@ class MakeSvgSlide(object):
                     current_point = pt
 
                 elif c.tag == DML('close'):
-                    if first_point is not None and first_point == current_point:
-                        closed = True
-                    svg_path.push('Z')
+                    if first_point is not None and current_point != first_point:
+                        svg_path.push('Z')
+                    closed = True
                     first_point = None
                 elif c.tag == DML('cubicBezTo'):
                     coords = []

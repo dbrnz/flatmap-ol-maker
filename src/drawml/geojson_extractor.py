@@ -133,8 +133,9 @@ class MakeGeoJsonSlide(object):
                     current_point = pt
 
                 elif c.tag == DML('close'):
-                    if first_point is not None and first_point == current_point:
-                        closed = True
+                    if first_point is not None and current_point != first_point:
+                        coordinates.append(transform_point(T, first_point))
+                    closed = True
                     first_point = None
                     # Close current pptx_geometry and start a new one...
 
