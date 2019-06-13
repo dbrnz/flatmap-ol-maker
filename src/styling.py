@@ -185,7 +185,7 @@ class Layers(object):
         layers = []
         layers.append(ImageLayer.style('background', background_id))
         for layer in layer_dict['vector_layers']:
-            layers.append(features_id, FeatureLayer.style(layer['id']))
+            layers.append(FeatureLayer.style(features_id, layer['id']))
         return layers
 
 #===============================================================================
