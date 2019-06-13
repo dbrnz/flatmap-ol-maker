@@ -18,27 +18,29 @@
 #
 #===============================================================================
 
-import subprocess
-import tempfile
+import json
 import multiprocessing
 import multiprocessing.connection
+import subprocess
+import tempfile
 
 #===============================================================================
 
 from src.drawml import GeoJsonExtractor
+from src.styling import Style
 
 #===============================================================================
 
-def process_slide(extractor, slide_number, output, result_queue):
+def process_slide(extractor, slide_number, output_file, result_queue):
     slide = extractor.slide_to_geometry(slide_number, False)
-    slide.save(output)
-    result_queue.put("Processed layer '{}'".format(slide.description))
+    slide.save(output_file)
+    result_queue.put((output_file, slide.layer_id, slide.description))
 
 #===============================================================================
 
 if __name__ == '__main__':
     import argparse
-    import os
+    import os, sys
 
     parser = argparse.ArgumentParser(description='Convert Powerpoint slides to a flatmap.')
     parser.add_argument('--debug-xml', action='store_true',
@@ -51,6 +53,8 @@ if __name__ == '__main__':
     parser.add_argument('powerpoint', metavar='POWERPOINT_FILE',
                         help='the name of a Powerpoint file')
 
+    ## --background
+    ##
     ## specify range of slides...
     # --force option
 
@@ -59,44 +63,74 @@ if __name__ == '__main__':
     if not os.path.exists(args.map_dir):
         os.makedirs(args.map_dir)
 
+    print('Extracting layers...')
     filenames = []
     processes = []
     extractor = GeoJsonExtractor(args.powerpoint, args)
     result_queue = multiprocessing.Queue()
-    for s in range(len(extractor)):
-        # We extract slides in parallel...
+    for s in range(2, len(extractor)+1):  # First slide is background layer
         (fh, filename) = tempfile.mkstemp(suffix='.json')
         os.close(fh)
         filenames.append(filename)
 
-        process = multiprocessing.Process(target=process_slide, args=(extractor, s + 1, filename, result_queue))
+        # We extract slides in parallel...
+
+        process = multiprocessing.Process(target=process_slide, args=(extractor, s, filename, result_queue))
         processes.append(process)
         process.start()
 
-    # Wait for all processes to complete
+    # Get layer details from each process
 
     num_processes = len(processes)
+    if num_processes == 0:
+        sys.exit('No map layers in Powerpoint...')
+
+    tippe_inputs = []
     while num_processes:
-        print(result_queue.get())
+        (filename, layer_id, description) = result_queue.get()
+        print("Processed layer {}: '{}'".format(layer_id, description))
+        tippe_inputs.append({
+            'file': filename,
+            'layer': layer_id,
+            'description': description
+            })
         num_processes -= 1
+
+    # Wait for all processes to complete
+
     for process in processes:
         process.join()
 
+    # Generate Mapbox vector tiles
+
     print('Running tippecanoe...')
     tile_dir = os.path.join(args.map_dir, 'mvtiles')
+
     subprocess.run(['tippecanoe',
                     '--projection=EPSG:4326',
                     '--no-tile-compression',
                     '--force',  ## Set layer names...
                     '--output-to-directory={}'.format(tile_dir)]
-                    + filenames)
+                    + list(["-L{}".format(json.dumps(input)) for input in tippe_inputs])
+                   )
 
-    # Now finished with temporary files so remove them
+    # Create style file
 
+    print('Creating style file...')
+
+    metadata_file = os.path.join(tile_dir, 'metadata.json')
+
+## args.base_url
+## args.background
+    style_dict = Style.style('http://localhost:8000/spine', metadata_file, 'background.jpeg')
+
+    with open(os.path.join(args.map_dir, 'style.json'), 'w') as output_file:
+        json.dump(style_dict, output_file)
+
+    # Tidy up
+
+    print('Cleaning up...')
     for filename in filenames:
         os.remove(filename)
-
-    # Now read os.path.join(tile_dir, metadata.json)
-    # and create style.json
 
 #===============================================================================
