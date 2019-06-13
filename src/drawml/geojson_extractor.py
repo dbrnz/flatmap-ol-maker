@@ -41,7 +41,7 @@ from .presets import DML
 
 #===============================================================================
 
-WORLD_PER_EMU = 0.01
+WORLD_PER_EMU = 0.1
 
 def transform_point(transform, point):
     pt = transform.dot([point[0], point[1], 1.0])
