@@ -29,9 +29,10 @@ from src.drawml import GeoJsonExtractor
 
 #===============================================================================
 
-def process_slide(extractor, slide_number, output):
-    slide_maker = extractor.slide_to_geometry(slide_number, False)
-    slide_maker.save(output)
+def process_slide(extractor, slide_number, output, result_queue):
+    slide = extractor.slide_to_geometry(slide_number, False)
+    slide.save(output)
+    result_queue.put("Processed layer '{}'".format(slide.description))
 
 #===============================================================================
 
@@ -58,34 +59,44 @@ if __name__ == '__main__':
     if not os.path.exists(args.map_dir):
         os.makedirs(args.map_dir)
 
-    sentinels = []
     filenames = []
+    processes = []
     extractor = GeoJsonExtractor(args.powerpoint, args)
+    result_queue = multiprocessing.Queue()
     for s in range(len(extractor)):
         # We extract slides in parallel...
         (fh, filename) = tempfile.mkstemp(suffix='.json')
         os.close(fh)
         filenames.append(filename)
 
-        p = multiprocessing.Process(target=process_slide, args=(extractor, s + 1, filename))
-        p.start()
-        sentinels.append(p.sentinel)
+        process = multiprocessing.Process(target=process_slide, args=(extractor, s + 1, filename, result_queue))
+        processes.append(process)
+        process.start()
 
-    while True:
-        finished = multiprocessing.connection.wait(sentinels, 1)
-        for sentinel in finished:
-            sentinels.remove(sentinel)
-        if (len(sentinels) == 0):
-            break
+    # Wait for all processes to complete
 
+    num_processes = len(processes)
+    while num_processes:
+        print(result_queue.get())
+        num_processes -= 1
+    for process in processes:
+        process.join()
+
+    print('Running tippecanoe...')
+    tile_dir = os.path.join(args.map_dir, 'mvtiles')
     subprocess.run(['tippecanoe',
                     '--projection=EPSG:4326',
                     '--no-tile-compression',
-                    '--force',
-                    '--output-to-directory={}/mvtiles'.format(args.map_dir)]
+                    '--force',  ## Set layer names...
+                    '--output-to-directory={}'.format(tile_dir)]
                     + filenames)
+
+    # Now finished with temporary files so remove them
 
     for filename in filenames:
         os.remove(filename)
+
+    # Now read os.path.join(tile_dir, metadata.json)
+    # and create style.json
 
 #===============================================================================
