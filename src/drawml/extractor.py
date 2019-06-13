@@ -25,7 +25,12 @@ import os
 
 import numpy as np
 
+import pptx.shapes.connector
 from pptx import Presentation
+from pptx.enum.shapes import MSO_SHAPE
+from pptx.enum.shapes import MSO_SHAPE_TYPE
+from pptx.spec import autoshape_types
+
 
 #===============================================================================
 
@@ -86,6 +91,70 @@ class Transform(object):
 
     def matrix(self):
         return self._T
+
+#===============================================================================
+
+class ProcessSlide(object):
+    def __init__(self, slide, slide_number, slide_size, args):
+        self._slide_number = slide_number
+        self._layer_id = 'slide{:02d}'.format(slide_number)
+        self._description = 'Slide {:02d}'.format(slide_number)
+        self._shape_ids = []
+
+    @property
+    def description(self):
+        return self._description
+
+    @property
+    def layer_id(self):
+        return self._layer_id
+
+    @property
+    def shape_ids(self):
+        return self._shape_ids
+
+    def process_shape_list(self, shapes, *args):
+        for shape in shapes:
+            shape.id = shape.element._nvXxPr.cNvPr.id  # FUTURE: shape.id
+            # See https://github.com/scanny/python-pptx/issues/520
+            shape.attribute = ''
+            if shape.name.startswith('#'):
+                attribs = shape.name.split()
+                if len(attribs[0]) > 1:
+                    shape.id = shape.name.split()[0][1:]
+                    if shape.id in self._shape_ids:
+                        raise KeyError('Duplicate ID {} in slide {}'
+                                       .format(shape.id, self._slide_number))
+                    self._shape_ids.append(shape.id)
+                    if len(attribs) > 1:
+                        shape.attribute = attribs[1]
+            if (shape.shape_type == MSO_SHAPE_TYPE.AUTO_SHAPE
+             or shape.shape_type == MSO_SHAPE_TYPE.FREEFORM
+             or isinstance(shape, pptx.shapes.connector.Connector)):
+                self.process_shape(shape, *args)
+            elif shape.shape_type == MSO_SHAPE_TYPE.GROUP:
+                self.process_group(shape, *args)
+            elif shape.shape_type == MSO_SHAPE_TYPE.TEXT_BOX:
+                if shape.id == 'layer-id' and shape.attribute != '':
+                    self._layer_id = shape.attribute
+                    if shape.text != '':
+                        self._description = shape.text
+            else:
+                print('"{}" {} not processed...'.format(shape.name, str(shape.shape_type)))
+
+    def geojson_from_shapes_(self, shapes, transform):
+        for shape in shapes:
+            if (shape.shape_type == MSO_SHAPE_TYPE.AUTO_SHAPE
+             or shape.shape_type == MSO_SHAPE_TYPE.FREEFORM
+             or isinstance(shape, pptx.shapes.connector.Connector)):
+                self.shape_to_feature_(shape, transform)
+            elif shape.shape_type == MSO_SHAPE_TYPE.GROUP:
+                self.geojson_from_shapes_(shape.shapes, transform*Transform(shape).matrix())
+            elif shape.shape_type == MSO_SHAPE_TYPE.TEXT_BOX:
+                #print('{}: {}'.format(shape.name, shape.text)) # Recognise name of '#layer-id' and get layer name...
+                pass
+            else:
+                print('"{}" {} not processed...'.format(shape.name, str(shape.shape_type)))
 
 #===============================================================================
 

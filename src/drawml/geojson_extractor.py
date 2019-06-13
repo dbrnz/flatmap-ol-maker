@@ -29,17 +29,12 @@ from beziers.cubicbezier import CubicBezier
 from beziers.point import Point as BezierPoint
 from beziers.quadraticbezier import QuadraticBezier
 
-import pptx.shapes.connector
-from pptx.enum.shapes import MSO_SHAPE
-from pptx.enum.shapes import MSO_SHAPE_TYPE
-from pptx.spec import autoshape_types
-
 import numpy as np
 
 #===============================================================================
 
 from .arc_to_bezier import cubic_beziers_from_arc, tuple2
-from .extractor import GeometryExtractor, Transform
+from .extractor import GeometryExtractor, ProcessSlide, Transform
 from .extractor import ellipse_point
 from .formula import Geometry, radians
 from .presets import DML
@@ -67,42 +62,33 @@ def transform_bezier_samples(transform, bz):
 
 #===============================================================================
 
-class MakeGeoJsonSlide(object):
+class MakeGeoJsonSlide(ProcessSlide):
     def __init__(self, slide, slide_number, slide_size, args):
+        super().__init__(slide, slide_number, slide_size, args)
         self._features = []
-        self._layer_id = 'slide{:02d}'.format(slide_number)
-        self._path_id = 1
         transform = np.matrix([[WORLD_PER_EMU,              0, 0],
                                [            0, -WORLD_PER_EMU, 0],
                                [            0,              0, 1]])*np.matrix([[1, 0, -slide_size[0]/2.0],
                                                                                [0, 1, -slide_size[1]/2.0],
                                                                                [0, 0,                1.0]])
-        self.geojson_from_shapes_(slide.shapes, transform)
-        with open(os.path.join(args.output_dir, '{}.json'.format(self._layer_id)), 'w') as output_file:
+        self.process_shape_list(slide.shapes, transform)
+        with open(os.path.join(args.output_dir, '{}.json'.format(self.layer_id)), 'w') as output_file:
             json.dump({
                 'type': 'FeatureCollection',
-                'id': self._layer_id,
+                'id': self.layer_id,
                 'creator': 'pptx2geo',        # Add version
-                'features': self._features
+                'features': self._features,
+                'properties': {
+                    'id': self.layer_id,
+                    'description': self.description
+                }
             }, output_file)
 
-    def geojson_from_shapes_(self, shapes, transform):
-        for shape in shapes:
-            if (shape.shape_type == MSO_SHAPE_TYPE.AUTO_SHAPE
-             or shape.shape_type == MSO_SHAPE_TYPE.FREEFORM
-             or isinstance(shape, pptx.shapes.connector.Connector)):
-                self.shape_to_feature_(shape, transform)
-            elif shape.shape_type == MSO_SHAPE_TYPE.GROUP:
-                self.geojson_from_shapes_(shape.shapes, transform*Transform(shape).matrix())
-            elif shape.shape_type == MSO_SHAPE_TYPE.TEXT_BOX:
-                #print('{}: {}'.format(shape.name, shape.text)) # Recognise name of '#layer-id' and get layer name...
-                pass
-            else:
-                print('"{}" {} not processed...'.format(shape.name, str(shape.shape_type)))
+    def process_group(self, group, transform):
+        self.process_shape_list(group.shapes, transform*Transform(group).matrix())
 
-    def shape_to_feature_(self, shape, transform):
-        path_id = '{}/{}'.format(self._layer_id, self._path_id)
-        self._path_id += 1
+    def process_shape(self, shape, transform):
+        path_id = '{}/{}'.format(self.layer_id, shape.id)
         feature = {
             'type': 'Feature',
             'id': path_id,
@@ -110,6 +96,10 @@ class MakeGeoJsonSlide(object):
                 'id': path_id
             }
         }
+        if shape.attribute != '':
+            feature['properties']['type'] = shape.attribute
+        if shape.id in self.shape_ids:
+            feature['properties']['selectable'] = True
         geometry = {}
         coordinates = []
 

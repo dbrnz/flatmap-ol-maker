@@ -23,16 +23,11 @@ import os
 
 #===============================================================================
 
-import pptx.shapes.connector
-from pptx.enum.shapes import MSO_SHAPE
-from pptx.enum.shapes import MSO_SHAPE_TYPE
-from pptx.spec import autoshape_types
-
 import svgwrite
 
 #===============================================================================
 
-from .extractor import GeometryExtractor, Transform
+from .extractor import GeometryExtractor, ProcessSlide, Transform
 from .extractor import EMU_PER_DOT, ellipse_point
 from .formula import Geometry, radians
 from .presets import DML
@@ -55,34 +50,22 @@ def svg_transform(m):
 
 #===============================================================================
 
-class MakeSvgSlide(object):
+class MakeSvgSlide(ProcessSlide):
     def __init__(self, slide, slide_number, slide_size, args):
-        self._dwg = svgwrite.Drawing(filename=os.path.join(args.output_dir, 'slide{:02d}.svg'.format(slide_number)),
+        super().__init__(slide, slide_number, slide_size, args)
+        self._dwg = svgwrite.Drawing(filename=os.path.join(args.output_dir, '{}.svg'.format(self.layer_id)),
                                      size=svg_coords(slide_size[0], slide_size[1]))
         self._dwg.defs.add(self._dwg.style('.non-scaling-stroke { vector-effect: non-scaling-stroke; }'))
-        self.svg_from_shapes_(slide.shapes, self._dwg)
+        self.process_shape_list(slide.shapes, self._dwg)
         self._dwg.save()
 
-    def svg_from_shapes_(self, shapes, svg_parent):
-        for shape in shapes:
-            if (shape.shape_type == MSO_SHAPE_TYPE.AUTO_SHAPE
-             or shape.shape_type == MSO_SHAPE_TYPE.FREEFORM
-             or isinstance(shape, pptx.shapes.connector.Connector)):
-                self.shape_to_svg_(shape, svg_parent)
+    def process_group(self, group, svg_parent):
+        svg_group = self._dwg.g()
+        svg_group.matrix(*svg_transform(Transform(group).matrix()))
+        svg_parent.add(svg_group)
+        self.process_shape_list(group.shapes, svg_group)
 
-            elif shape.shape_type == MSO_SHAPE_TYPE.GROUP:
-                svg_group = self._dwg.g()
-                svg_group.matrix(*svg_transform(Transform(shape).matrix()))
-                svg_parent.add(svg_group)
-                self.svg_from_shapes_(shape.shapes, svg_group)
-
-            elif shape.shape_type == MSO_SHAPE_TYPE.TEXT_BOX:
-                pass  # or recognise name of '#layer-id' and get layer name...
-
-            else:
-                print('"{}" {} not processed...'.format(shape.name, str(shape.shape_type)))
-
-    def shape_to_svg_(self, shape, svg_parent):
+    def process_shape(self, shape, svg_parent):
         geometry = Geometry(shape)
         for path in geometry.path_list:
             bbox = (shape.width, shape.height) if path.w is None else (path.w, path.h)
