@@ -181,9 +181,9 @@ class ProcessSlide(object):
 #===============================================================================
 
 class GeometryExtractor(object):
-    def __init__(self, args):
+    def __init__(self, pptx, args):
+        self._ppt = Presentation(pptx)
         self._args = args
-        self._ppt = Presentation(args.powerpoint)
         self._slides = self._ppt.slides
         self._slide_size = [self._ppt.slide_width, self._ppt.slide_height]
         self._slide_maker = None
@@ -198,7 +198,7 @@ class GeometryExtractor(object):
     def slide(self, slide_number):
         return self._slides[slide_number - 1]
 
-    def slide_to_geometry(self, slide_number):
+    def slide_to_geometry(self, slide_number, save_output=True):
         slide = self.slide(slide_number)
         if self._args.debug_xml:
             xml = open(os.path.join(self._args.output_dir, 'slide{:02d}.xml'.format(slide_number)), 'w')
@@ -207,7 +207,10 @@ class GeometryExtractor(object):
         if self._slide_maker is not None:
             slide_maker = self._slide_maker(slide, slide_number, self.slide_size, self._args)
             slide_maker.process()
-            slide_maker.save()
+            if save_output:
+                slide_maker.save()
+            else:
+                return slide_maker
 
     def slides_to_geometry(self, slide_range):
         if slide_range is None:

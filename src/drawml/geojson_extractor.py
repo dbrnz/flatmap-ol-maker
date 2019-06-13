@@ -197,8 +197,8 @@ class MakeGeoJsonSlide(ProcessSlide):
 #===============================================================================
 
 class GeoJsonExtractor(GeometryExtractor):
-    def __init__(self, args):
-        super().__init__(args)
+    def __init__(self, pptx, args):
+        super().__init__(pptx, args)
         self._slide_maker = MakeGeoJsonSlide
 
 #===============================================================================

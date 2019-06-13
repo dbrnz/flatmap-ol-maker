@@ -48,9 +48,9 @@ if __name__ == '__main__':
         os.makedirs(args.output_dir)
 
     if   args.format == 'geojson':
-        extractor = GeoJsonExtractor(args)
+        extractor = GeoJsonExtractor(args.powerpoint, args)
     elif args.format == 'svg':
-        extractor = SvgExtractor(args)
+        extractor = SvgExtractor(args.powerpoint, args)
 
     extractor.slides_to_geometry(args.slide)
 
