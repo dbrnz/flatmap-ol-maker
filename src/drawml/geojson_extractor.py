@@ -98,18 +98,16 @@ class MakeGeoJsonSlide(ProcessSlide):
         self.process_shape_list(group.shapes, transform*Transform(group).matrix())
 
     def process_shape(self, shape, transform):
-        path_id = '{}/{}'.format(self.layer_id, shape.id)
         feature = {
             'type': 'Feature',
-            'id': path_id,
-            'properties': {
-                'id': path_id
-            }
+            'id': shape.shape_id,
+            'properties': {}
         }
-        if shape.attribute != '':
-            feature['properties']['type'] = shape.attribute
-        if shape.id in self.shape_ids:
+        if shape.name_id != '':
+            feature['properties']['id'] = '{}/{}'.format(self.layer_id, shape.name_id)
             feature['properties']['selectable'] = True
+        if len(shape.name_attributes):
+            feature['properties']['type'] = shape.name_attributes[0]
         geometry = {}
         coordinates = []
 

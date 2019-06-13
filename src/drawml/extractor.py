@@ -101,7 +101,7 @@ class ProcessSlide(object):
         self._args = args
         self._layer_id = 'slide{:02d}'.format(slide_number)
         self._description = 'Slide {:02d}'.format(slide_number)
-        self._shape_ids = []
+        self._shape_name_ids = []
 
     @property
     def args(self):
@@ -116,8 +116,8 @@ class ProcessSlide(object):
         return self._layer_id
 
     @property
-    def shape_ids(self):
-        return self._shape_ids
+    def shape_name_ids(self):
+        return self._shape_name_ids
 
     @property
     def slide(self):
@@ -137,19 +137,18 @@ class ProcessSlide(object):
 
     def process_shape_list(self, shapes, *args):
         for shape in shapes:
-            shape.id = shape.element._nvXxPr.cNvPr.id  # FUTURE: shape.id
-            # See https://github.com/scanny/python-pptx/issues/520
-            shape.attribute = ''
+            shape.name_id = ''
+            shape.name_attributes = []
             if shape.name.startswith('#'):
                 attribs = shape.name.split()
                 if len(attribs[0]) > 1:
-                    shape.id = shape.name.split()[0][1:]
-                    if shape.id in self._shape_ids:
-                        raise KeyError('Duplicate ID {} in slide {}'
-                                       .format(shape.id, self._slide_number))
-                    self._shape_ids.append(shape.id)
+                    shape.name_id = shape.name.split()[0][1:]
+                    if shape.name_id in self._shape_name_ids:
+                        raise KeyError('Duplicate name ID {} in slide {}'
+                                       .format(shape.name_id, self._slide_number))
+                    self._shape_name_ids.append(shape.name_id)
                     if len(attribs) > 1:
-                        shape.attribute = attribs[1]
+                        shape.name_attributes = attribs[1:]
             if (shape.shape_type == MSO_SHAPE_TYPE.AUTO_SHAPE
              or shape.shape_type == MSO_SHAPE_TYPE.FREEFORM
              or isinstance(shape, pptx.shapes.connector.Connector)):
@@ -157,8 +156,8 @@ class ProcessSlide(object):
             elif shape.shape_type == MSO_SHAPE_TYPE.GROUP:
                 self.process_group(shape, *args)
             elif shape.shape_type == MSO_SHAPE_TYPE.TEXT_BOX:
-                if shape.id == 'layer-id' and shape.attribute != '':
-                    self._layer_id = shape.attribute
+                if shape.name_id == 'layer-id' and len(shape.name_attributes) > 0:
+                    self._layer_id = shape.name_attributes[0]
                     if shape.text != '':
                         self._description = shape.text
             else:

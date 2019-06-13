@@ -69,7 +69,7 @@ class MakeSvgSlide(ProcessSlide):
         self._dwg.saveas(filename)
 
     def process_group(self, group, svg_parent):
-        svg_group = self._dwg.g()
+        svg_group = self._dwg.g(id=group.shape_id)
         svg_group.matrix(*svg_transform(Transform(group).matrix()))
         svg_parent.add(svg_group)
         self.process_shape_list(group.shapes, svg_group)
@@ -78,7 +78,8 @@ class MakeSvgSlide(ProcessSlide):
         geometry = Geometry(shape)
         for path in geometry.path_list:
             bbox = (shape.width, shape.height) if path.w is None else (path.w, path.h)
-            svg_path = self._dwg.path(fill='none', stroke_width=3, class_='non-scaling-stroke') # id='sss'
+            svg_path = self._dwg.path(id=shape.shape_id, fill='none', stroke_width=3,
+                                      class_='non-scaling-stroke')
             svg_path.matrix(*svg_transform(Transform(shape, bbox).matrix()))
             first_point = None
             current_point = None
