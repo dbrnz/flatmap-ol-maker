@@ -64,25 +64,35 @@ def transform_bezier_samples(transform, bz):
 
 class MakeGeoJsonSlide(ProcessSlide):
     def __init__(self, slide, slide_number, slide_size, args):
-        super().__init__(slide, slide_number, slide_size, args)
+        super().__init__(slide, slide_number, args)
+        self._transform = np.matrix([[WORLD_PER_EMU,              0, 0],
+                                     [            0, -WORLD_PER_EMU, 0],
+                                     [            0,              0, 1]])*np.matrix([[1, 0, -slide_size[0]/2.0],
+                                                                                     [0, 1, -slide_size[1]/2.0],
+                                                                                     [0, 0,                1.0]])
+
+    def process(self):
         self._features = []
-        transform = np.matrix([[WORLD_PER_EMU,              0, 0],
-                               [            0, -WORLD_PER_EMU, 0],
-                               [            0,              0, 1]])*np.matrix([[1, 0, -slide_size[0]/2.0],
-                                                                               [0, 1, -slide_size[1]/2.0],
-                                                                               [0, 0,                1.0]])
-        self.process_shape_list(slide.shapes, transform)
-        with open(os.path.join(args.output_dir, '{}.json'.format(self.layer_id)), 'w') as output_file:
-            json.dump({
-                'type': 'FeatureCollection',
+        self.process_shape_list(self.slide.shapes, self._transform)
+        self._feature_collection = {
+            'type': 'FeatureCollection',
+            'id': self.layer_id,
+            'creator': 'pptx2geo',        # Add version
+            'features': self._features,
+            'properties': {
                 'id': self.layer_id,
-                'creator': 'pptx2geo',        # Add version
-                'features': self._features,
-                'properties': {
-                    'id': self.layer_id,
-                    'description': self.description
-                }
-            }, output_file)
+                'description': self.description
+            }
+        }
+
+    def get_output(self):
+        return self._feature_collection
+
+    def save(self, filename=None):
+        if filename is None:
+            filename = os.path.join(self.args.output_dir, '{}.json'.format(self.layer_id))
+        with open(filename, 'w') as output_file:
+            json.dump(self._feature_collection, output_file)
 
     def process_group(self, group, transform):
         self.process_shape_list(group.shapes, transform*Transform(group).matrix())

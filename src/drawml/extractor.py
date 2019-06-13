@@ -95,11 +95,17 @@ class Transform(object):
 #===============================================================================
 
 class ProcessSlide(object):
-    def __init__(self, slide, slide_number, slide_size, args):
+    def __init__(self, slide, slide_number, args):
+        self._slide = slide
         self._slide_number = slide_number
+        self._args = args
         self._layer_id = 'slide{:02d}'.format(slide_number)
         self._description = 'Slide {:02d}'.format(slide_number)
         self._shape_ids = []
+
+    @property
+    def args(self):
+        return self._args
 
     @property
     def description(self):
@@ -112,6 +118,22 @@ class ProcessSlide(object):
     @property
     def shape_ids(self):
         return self._shape_ids
+
+    @property
+    def slide(self):
+        return self._slide
+
+    def process():
+        # Override in sub-class
+        pass
+
+    def get_output(self):
+        # Override in sub-class
+        pass
+
+    def save(self, filename=None):
+        # Override in sub-class
+        pass
 
     def process_shape_list(self, shapes, *args):
         for shape in shapes:
@@ -183,7 +205,9 @@ class GeometryExtractor(object):
             xml.write(slide.element.xml)
             xml.close()
         if self._slide_maker is not None:
-            self._slide_maker(slide, slide_number, self.slide_size, self._args)
+            slide_maker = self._slide_maker(slide, slide_number, self.slide_size, self._args)
+            slide_maker.process()
+            slide_maker.save()
 
     def slides_to_geometry(self, slide_range):
         if slide_range is None:

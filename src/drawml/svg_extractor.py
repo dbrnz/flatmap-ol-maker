@@ -52,12 +52,21 @@ def svg_transform(m):
 
 class MakeSvgSlide(ProcessSlide):
     def __init__(self, slide, slide_number, slide_size, args):
-        super().__init__(slide, slide_number, slide_size, args)
-        self._dwg = svgwrite.Drawing(filename=os.path.join(args.output_dir, '{}.svg'.format(self.layer_id)),
+        super().__init__(slide, slide_number, args)
+        self._dwg = svgwrite.Drawing(filename=None,
                                      size=svg_coords(slide_size[0], slide_size[1]))
         self._dwg.defs.add(self._dwg.style('.non-scaling-stroke { vector-effect: non-scaling-stroke; }'))
-        self.process_shape_list(slide.shapes, self._dwg)
-        self._dwg.save()
+
+    def process(self):
+        self.process_shape_list(self.slide.shapes, self._dwg)
+
+    def get_output(self):
+        return self._dwg.tostring()
+
+    def save(self, filename=None):
+        if filename is None:
+            filename = os.path.join(self.args.output_dir, '{}.svg'.format(self.layer_id))
+        self._dwg.saveas(filename)
 
     def process_group(self, group, svg_parent):
         svg_group = self._dwg.g()
