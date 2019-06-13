@@ -71,7 +71,7 @@ def cubic_beziers_from_arc(r, phi, flagA, flagS, p1, p2):
         r_abs = tuple2(scale*r_abs.x, scale*r_abs.y)
         r_sq = tuple2(r_abs.x**2, r_abs.y**2)
 
-    dq = r_sq.x*p_sq.x + r_sq.y*p_sq.x
+    dq = r_sq.x*p_sq.y + r_sq.y*p_sq.x
     pq = (r_sq.x*r_sq.y - dq)/dq
     q = math.sqrt(max(0, pq))
     if flagA == flagS:
