@@ -88,7 +88,7 @@ if __name__ == '__main__':
     tippe_inputs = []
     while num_processes:
         (filename, layer_id, description) = result_queue.get()
-        print("Processed layer {}: '{}'".format(layer_id, description))
+        print('Processed layer {}: {}'.format(layer_id, description))
         tippe_inputs.append({
             'file': filename,
             'layer': layer_id,
