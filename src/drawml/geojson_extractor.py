@@ -38,6 +38,7 @@ import numpy as np
 
 #===============================================================================
 
+from .arc_to_bezier import cubic_beziers_from_arc, tuple2
 from .extractor import GeometryExtractor, Transform
 from .extractor import ellipse_point
 from .formula import Geometry, radians
@@ -59,6 +60,10 @@ def point_to_lon_lat(point):
 
 def points_to_lon_lat(points):
     return [ point_to_lon_lat(pt) for pt in points ]
+
+def transform_bezier_samples(transform, bz):
+    samples = 100
+    return [transform_point(transform, (pt.x, pt.y)) for pt in bz.sample(samples)]
 
 #===============================================================================
 
@@ -129,7 +134,10 @@ class MakeGeoJsonSlide(object):
                     pt = (current_point[0] - p1[0] + p2[0],
                           current_point[1] - p1[1] + p2[1])
                     large_arc_flag = 1 if swAng >= math.pi else 0
-                    ## Arc as bezier??
+                    beziers = cubic_beziers_from_arc(tuple2(wR, hR), 0, large_arc_flag, 1,
+                                                     tuple2(*current_point), tuple2(*pt))
+                    for bz in beziers:
+                        coordinates.extend(transform_bezier_samples(T, bz))
                     current_point = pt
 
                 elif c.tag == DML('close'):
@@ -146,9 +154,7 @@ class MakeGeoJsonSlide(object):
                         coords.append(BezierPoint(*pt))
                         current_point = pt
                     bz = CubicBezier(*coords)
-                    print(bz.length)
-                    samples = 1000
-                    coordinates.extend([transform_point(T, (pt.x, pt.y)) for pt in bz.sample(samples)])
+                    coordinates.extend(transform_bezier_samples(T, bz))
 
                 elif c.tag == DML('lnTo'):
                     pt = pptx_geometry.point(c.pt)
@@ -172,9 +178,7 @@ class MakeGeoJsonSlide(object):
                         coords.append(BezierPoint(*pt))
                         current_point = pt
                     bz = QuadraticBezier(*coords)
-                    print(bz.length)
-                    samples = 1000
-                    coordinates.extend([transform_point(T, (pt.x, pt.y)) for pt in bz.sample(samples)])
+                    coordinates.extend(transform_bezier_samples(T, bz))
 
                 else:
                     print('Unknown path element: {}'.format(c.tag))
