@@ -134,10 +134,10 @@ class FeatureLineLayer(object):
 
 class BackgroundSource(object):
     @staticmethod
-    def style(base_url, background_file, bounds):
+    def style(base_url, background_image, bounds):
         return {
             'type': 'image',
-            'url': '{}/{}'.format(base_url, background_file),
+            'url': '{}/images/{}'.format(base_url, background_image),
             'coordinates': [
                 [bounds[0], bounds[3]],
                 [bounds[2], bounds[3]],
@@ -171,9 +171,9 @@ class FeaturesSource(object):
 
 class Sources(object):
     @staticmethod
-    def style(base_url, background_id, background_file, features_id, layer_dict, bounds):
+    def style(base_url, background_id, background_image, features_id, layer_dict, bounds):
         return {
-            background_id: BackgroundSource.style(base_url, background_file, bounds),
+            background_id: BackgroundSource.style(base_url, background_image, bounds),
             features_id: FeaturesSource.style(base_url, layer_dict, bounds),
         }
 
@@ -185,7 +185,7 @@ class Layers(object):
         layers = []
         layers.append(ImageLayer.style('background', background_id))
         for layer in layer_dict['vector_layers']:
-            layers.append(FeatureLayer.style(features_id, layer['id']))
+            layers.extend(FeatureLayer.style(features_id, layer['id']))
         return layers
 
 #===============================================================================
@@ -193,7 +193,7 @@ class Layers(object):
 
 class Style(object):
     @staticmethod
-    def style(base_url, metadata_file, background_file):
+    def style(base_url, metadata_file, background_image=None):
         metadata = json.load(open(metadata_file))
         layer_dict = json.loads(metadata['json'])
         bounds = [float(x) for x in metadata['bounds'].split(',')]
@@ -201,7 +201,7 @@ class Style(object):
         features_id = 'features'
         return {
             'version': 8,
-            'sources': Sources.style(base_url, background_id, background_file, features_id, layer_dict, bounds),
+            'sources': Sources.style(base_url, background_id, background_image, features_id, layer_dict, bounds),
             'zoom': 7,
             'center': [float(x) for x in metadata['center'].split(',')],
             'layers': Layers.style(background_id, features_id, layer_dict)

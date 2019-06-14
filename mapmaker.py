@@ -48,8 +48,14 @@ if __name__ == '__main__':
     parser.add_argument('--slide', type=int, metavar='N',
                         help='only process this slide number (1-origin)')
     parser.add_argument('--version', action='version', version='0.2.1')
-    parser.add_argument('map_dir', metavar='MAP_DIRECTORY',
-                        help='directory in which to save the map')
+
+
+    base_url = 'http://localhost:8000'
+    maps_dir = '/Users/dave/build/mapmaker/mvt'
+    background_image = 'background.jpeg'
+
+    parser.add_argument('map_id', metavar='MAP_ID',
+                        help='a unique identifier for the map')
     parser.add_argument('powerpoint', metavar='POWERPOINT_FILE',
                         help='the name of a Powerpoint file')
 
@@ -60,8 +66,10 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    if not os.path.exists(args.map_dir):
-        os.makedirs(args.map_dir)
+    map_dir = os.path.join(maps_dir, args.map_id)
+
+    if not os.path.exists(map_dir):
+        os.makedirs(map_dir)
 
     print('Extracting layers...')
     filenames = []
@@ -104,7 +112,9 @@ if __name__ == '__main__':
     # Generate Mapbox vector tiles
 
     print('Running tippecanoe...')
-    tile_dir = os.path.join(args.map_dir, 'mvtiles')
+    tile_dir = os.path.join(map_dir, 'mvtiles')
+    if not os.path.exists(tile_dir):
+        os.makedirs(tile_dir)
 
     subprocess.run(['tippecanoe',
                     '--projection=EPSG:4326',
@@ -122,9 +132,9 @@ if __name__ == '__main__':
 
 ## args.base_url
 ## args.background
-    style_dict = Style.style('http://localhost:8000/spine', metadata_file, 'background.jpeg')
+    style_dict = Style.style('{}/{}'.format(base_url, args.map_id), metadata_file, background_image)
 
-    with open(os.path.join(args.map_dir, 'style.json'), 'w') as output_file:
+    with open(os.path.join(map_dir, 'style.json'), 'w') as output_file:
         json.dump(style_dict, output_file)
 
     # Tidy up
