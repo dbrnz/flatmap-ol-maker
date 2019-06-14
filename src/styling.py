@@ -158,7 +158,6 @@ class FeaturesSource(object):
             'version': '2',
             'minzoom': 0,
             'maxzoom': 14,
-            'center': [0, 0, 2],
             'bounds': bounds,
             'attribution': '© Auckland Bioengineering Institute',
             'generator': 'tippecanoe v1.34.0',
@@ -201,8 +200,8 @@ class Style(object):
         return {
             'version': 8,
             'sources': Sources.style(base_url, background_id, background_image, features_id, layer_dict, bounds),
-            'zoom': 7,
-            'center': [float(x) for x in metadata['center'].split(',')],
+            'zoom': 4,
+            'center': [0, 0],
             'layers': Layers.style(background_id, features_id, layer_dict)
         }
 
