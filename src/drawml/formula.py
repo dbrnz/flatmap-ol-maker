@@ -147,7 +147,8 @@ class Geometry(object):
             self._geometry = shape.element.spPr.custGeom
             adjustments = None
 
-        elif isinstance(shape, pptx.shapes.connector.Connector):
+        elif (shape.shape_type == MSO_SHAPE_TYPE.PICTURE
+           or isinstance(shape, pptx.shapes.connector.Connector)):
             self._geometry = Shapes.lookup(shape.element.spPr.prstGeom.attrib['prst'])
             adjustments = None
 

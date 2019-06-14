@@ -151,6 +151,7 @@ class ProcessSlide(object):
                         shape.name_attributes = attribs[1:]
             if (shape.shape_type == MSO_SHAPE_TYPE.AUTO_SHAPE
              or shape.shape_type == MSO_SHAPE_TYPE.FREEFORM
+             or shape.shape_type == MSO_SHAPE_TYPE.PICTURE
              or isinstance(shape, pptx.shapes.connector.Connector)):
                 self.process_shape(shape, *args)
             elif shape.shape_type == MSO_SHAPE_TYPE.GROUP:
