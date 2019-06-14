@@ -164,20 +164,6 @@ class ProcessSlide(object):
             else:
                 print('"{}" {} not processed...'.format(shape.name, str(shape.shape_type)))
 
-    def geojson_from_shapes_(self, shapes, transform):
-        for shape in shapes:
-            if (shape.shape_type == MSO_SHAPE_TYPE.AUTO_SHAPE
-             or shape.shape_type == MSO_SHAPE_TYPE.FREEFORM
-             or isinstance(shape, pptx.shapes.connector.Connector)):
-                self.shape_to_feature_(shape, transform)
-            elif shape.shape_type == MSO_SHAPE_TYPE.GROUP:
-                self.geojson_from_shapes_(shape.shapes, transform*Transform(shape).matrix())
-            elif shape.shape_type == MSO_SHAPE_TYPE.TEXT_BOX:
-                #print('{}: {}'.format(shape.name, shape.text)) # Recognise name of '#layer-id' and get layer name...
-                pass
-            else:
-                print('"{}" {} not processed...'.format(shape.name, str(shape.shape_type)))
-
 #===============================================================================
 
 class GeometryExtractor(object):
