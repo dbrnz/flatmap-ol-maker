@@ -51,10 +51,10 @@ def svg_transform(m):
 #===============================================================================
 
 class MakeSvgSlide(ProcessSlide):
-    def __init__(self, slide, slide_number, slide_size, args):
+    def __init__(self, extractor, slide, slide_number, args):
         super().__init__(slide, slide_number, args)
         self._dwg = svgwrite.Drawing(filename=None,
-                                     size=svg_coords(slide_size[0], slide_size[1]))
+                                     size=svg_coords(extractor.slide_size[0], extractor.slide_size[1]))
         self._dwg.defs.add(self._dwg.style('.non-scaling-stroke { vector-effect: non-scaling-stroke; }'))
 
     def process(self):
@@ -147,6 +147,9 @@ class MakeSvgSlide(ProcessSlide):
 class SvgExtractor(GeometryExtractor):
     def __init__(self, pptx, args):
         super().__init__(pptx, args)
-        self._slide_maker = MakeSvgSlide
+        self._SlideMaker = MakeSvgSlide
+
+    def bounds(self):
+        return [svg_units(b) for b in super().bounds()]
 
 #===============================================================================

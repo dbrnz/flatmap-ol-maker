@@ -193,10 +193,9 @@ class Layers(object):
 
 class Style(object):
     @staticmethod
-    def style(base_url, metadata_file, background_image=None):
+    def style(base_url, metadata_file, bounds, background_image=None):
         metadata = json.load(open(metadata_file))
         layer_dict = json.loads(metadata['json'])
-        bounds = [float(x) for x in metadata['bounds'].split(',')]
         background_id = 'background'
         features_id = 'features'
         return {

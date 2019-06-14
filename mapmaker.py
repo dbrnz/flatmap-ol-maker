@@ -74,16 +74,16 @@ if __name__ == '__main__':
     print('Extracting layers...')
     filenames = []
     processes = []
-    extractor = GeoJsonExtractor(args.powerpoint, args)
+    map_extractor = GeoJsonExtractor(args.powerpoint, args)
     result_queue = multiprocessing.Queue()
-    for s in range(2, len(extractor)+1):  # First slide is background layer
+    for s in range(2, len(map_extractor)+1):  # First slide is background layer
         (fh, filename) = tempfile.mkstemp(suffix='.json')
         os.close(fh)
         filenames.append(filename)
 
         # We extract slides in parallel...
 
-        process = multiprocessing.Process(target=process_slide, args=(extractor, s, filename, result_queue))
+        process = multiprocessing.Process(target=process_slide, args=(map_extractor, s, filename, result_queue))
         processes.append(process)
         process.start()
 
@@ -132,7 +132,10 @@ if __name__ == '__main__':
 
 ## args.base_url
 ## args.background
-    style_dict = Style.style('{}/{}'.format(base_url, args.map_id), metadata_file, background_image)
+    style_dict = Style.style('{}/{}'.format(base_url, args.map_id),
+                             metadata_file,
+                             map_extractor.bounds(),
+                             background_image)
 
     with open(os.path.join(map_dir, 'style.json'), 'w') as output_file:
         json.dump(style_dict, output_file)

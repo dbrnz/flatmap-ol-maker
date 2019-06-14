@@ -63,13 +63,9 @@ def transform_bezier_samples(transform, bz):
 #===============================================================================
 
 class MakeGeoJsonSlide(ProcessSlide):
-    def __init__(self, slide, slide_number, slide_size, args):
+    def __init__(self, extractor, slide, slide_number, args):
         super().__init__(slide, slide_number, args)
-        self._transform = np.matrix([[WORLD_PER_EMU,              0, 0],
-                                     [            0, -WORLD_PER_EMU, 0],
-                                     [            0,              0, 1]])*np.matrix([[1, 0, -slide_size[0]/2.0],
-                                                                                     [0, 1, -slide_size[1]/2.0],
-                                                                                     [0, 0,                1.0]])
+        self._transform = extractor.transform
 
     def process(self):
         self._features = []
@@ -197,6 +193,21 @@ class MakeGeoJsonSlide(ProcessSlide):
 class GeoJsonExtractor(GeometryExtractor):
     def __init__(self, pptx, args):
         super().__init__(pptx, args)
-        self._slide_maker = MakeGeoJsonSlide
+        self._SlideMaker = MakeGeoJsonSlide
+        self._transform = np.matrix([[WORLD_PER_EMU,              0, 0],
+                                     [            0, -WORLD_PER_EMU, 0],
+                                     [            0,              0, 1]])*np.matrix([[1, 0, -self._slide_size[0]/2.0],
+                                                                                     [0, 1, -self._slide_size[1]/2.0],
+                                                                                     [0, 0,                      1.0]])
+    @property
+    def transform(self):
+        return self._transform
+
+    def bounds(self):
+        bounds = super().bounds()
+        top_left = point_to_lon_lat(transform_point(self._transform, (bounds[0], bounds[1])))
+        bottom_right = point_to_lon_lat(transform_point(self._transform, (bounds[2], bounds[3])))
+        ## Need to check Y flip...
+        return [top_left[0], -top_left[1], bottom_right[0], -bottom_right[1]]
 
 #===============================================================================
